@@ -63,7 +63,7 @@ class Jugador(pygame.sprite.Sprite):
         if self.vely == 0:
             self.vely = 1
         else:
-            self.vely += .50
+            self.vely += .35
 
         #Observamos si nos encontramos sobre el suelo
         if self.rect.y >= ALTO - self.rect.height and self.vely >= 0:
@@ -76,7 +76,7 @@ class Jugador(pygame.sprite.Sprite):
         self.rect.y -= 2
         print self.rect.bottom
         if len(lista_impactos_plataforma) > 0 or self.rect.bottom >= ALTO:
-            self.vely = -20
+            self.vely = -10
 
     def update(self):
         self.Gravedad()
@@ -88,7 +88,7 @@ class Jugador(pygame.sprite.Sprite):
             self.con +=1
         else:
             self.con = 0
-            self.accion=11
+            #self.accion=11
 
         lista_impactos_bloque = pygame.sprite.spritecollide(self, self.nivel.listade_bloques,False)
         for bloque in lista_impactos_bloque:
@@ -143,7 +143,7 @@ class Nivel(object):
         self.listade_enemigos = pygame.sprite.Group()
         self.jugador = jugador
         #Imagen de fondo
-        self.imagende_fondo = None
+        self.imagende_fondo = pygame.image.load('Fondo.jpg')
 
         self.mapa = configparser.ConfigParser()
         self.mapa.read('mapa_prueba.mpt')
@@ -159,8 +159,7 @@ class Nivel(object):
         '''Dibujamos todo en el nivel'''
 
         '''Cargar imagen de fondo de mapa'''
-        #pantalla.blit(self.imagende_fondo,[0,-400])
-        pantalla.fill(NEGRO)
+        pantalla.blit(self.imagende_fondo,[0,0])
 
         '''Cargar todas las listas de sprites que teniamos'''
         self.listade_bloques.draw(pantalla)
@@ -228,18 +227,20 @@ if __name__ == '__main__':
                 fin=True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
-                    j.velx=10
+                    j.velx=5
                     j.vely=0
+                    j.accion = 11
                 if event.key == pygame.K_LEFT:
-                    j.velx=-10
+                    j.velx=-5
                     j.vely=0
+                    j.accion = 9
                 if event.key == pygame.K_UP:
                     j.velx=0
                     j.Saltar()
 
                 if event.key == pygame.K_DOWN:
                     j.velx=0
-                    j.vely=10
+                    j.vely=5
                 if event.key == pygame.K_x:
                     #golpe
                     j.accion=2
