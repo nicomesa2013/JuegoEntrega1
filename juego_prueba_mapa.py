@@ -2,8 +2,8 @@ import pygame
 import random
 import configparser
 
-ANCHO = 640
-ALTO = 480
+ANCHO = 1000
+ALTO = 600
 VERDE=[0,255,0]
 BLANCO=[255,255,255]
 NEGRO=[0,0,0]
@@ -50,9 +50,12 @@ class Jugador(pygame.sprite.Sprite):
         self.con=0
         self.lim = [6,6,6,6,7,7,7,7,8,8,8,8]
         self.image = self.m[self.con][self.accion]
+
         self.rect=self.image.get_rect()
+        self.rect.x = 700
+        self.rect.y = 400
         self.velx=0
-        self.vely=400
+        self.vely=0
 
         self.nivel = None
 
@@ -69,16 +72,17 @@ class Jugador(pygame.sprite.Sprite):
     def Saltar(self):
         print 'Entro a salto'
         self.rect.y += 2
-        #lista_impactos_plataforma = pygame.sprite.spritecollide(self, self.nivel.listade_plataformas, False)
+        lista_impactos_plataforma = pygame.sprite.spritecollide(self, self.nivel.listade_bloques, False)
         self.rect.y -= 2
         print self.rect.bottom
-        if  self.rect.bottom >= ALTO:
+        if len(lista_impactos_plataforma) > 0 or self.rect.bottom >= ALTO:
             self.vely = -20
 
     def update(self):
         self.Gravedad()
         self.rect.x += self.velx
-        self.rect.y += self.vely
+
+
         self.image=self.m[self.con][self.accion]
         if self.con < self.lim[self.accion] and self.velx != 0:
             self.con +=1
@@ -86,6 +90,24 @@ class Jugador(pygame.sprite.Sprite):
             self.con = 0
             self.accion=11
 
+        lista_impactos_bloque = pygame.sprite.spritecollide(self, self.nivel.listade_bloques,False)
+        for bloque in lista_impactos_bloque:
+            '''Si estamos en desplazamiento a la derecha'''
+            if self.velx > 0 :
+
+                self.rect.right = bloque.rect.left
+            elif self.velx < 0:
+                self.rect.left = bloque.rect.right
+
+        self.rect.y +=self.vely
+        lista_impactos_bloque = pygame.sprite.spritecollide(self, self.nivel.listade_bloques,False)
+        for bloque in lista_impactos_bloque:
+            '''Si estamos desplazando en vertical'''
+            if self.vely > 0:
+                self.rect.bottom = bloque.rect.top
+            elif self.vely < 0:
+                self.rect.top = bloque.rect.bottom
+            self.vely = 0
 
 
 class Bloque(pygame.sprite.Sprite):
@@ -112,68 +134,91 @@ class Bloque(pygame.sprite.Sprite):
         if self.velx > 0:
             self.velx -= 1
 
+class Nivel(object):
 
 
+
+    def __init__(self, jugador):
+        self.listade_bloques = pygame.sprite.Group()
+        self.listade_enemigos = pygame.sprite.Group()
+        self.jugador = jugador
+        #Imagen de fondo
+        self.imagende_fondo = None
+
+        self.mapa = configparser.ConfigParser()
+        self.mapa.read('mapa_prueba.mpt')
+        archivoMapa = self.mapa.get('info','img')
+        imagenMapa = pygame.image.load(archivoMapa)
+        self.mM = Recortar_Mapa(imagenMapa,32,32)
+
+    def update(self):
+        self.listade_bloques.update()
+        self.listade_enemigos.update()
+
+    def draw(self,pantalla):
+        '''Dibujamos todo en el nivel'''
+
+        '''Cargar imagen de fondo de mapa'''
+        #pantalla.blit(self.imagende_fondo,[0,-400])
+        pantalla.fill(NEGRO)
+
+        '''Cargar todas las listas de sprites que teniamos'''
+        self.listade_bloques.draw(pantalla)
+        self.listade_enemigos.draw(pantalla)
+
+    def cargarMapa(self,pantalla):
+        mp = self.mapa.get('info','mapa')
+        mp = mp.split('\n')#Fragmenta la matriz en filas
+        s = []
+        c = 0
+        f = 0
+        for e in mp:
+            for i in e:
+                d = self.mapa.get(i,'tipo')
+
+                # if d == 'vacio':
+                #     #image = pygame.Surface([32,32])
+                #     #pantalla.blit(image, [c*32,f*32])
+                #     #pygame.display.flip()
+                # if d == 'muro':
+                #     fl = int(mapa.get('#','fil'))
+                #     cl = int(mapa.get('#','col'))
+                #     pantalla.blit(mM[fl][cl],[c*32,f*32])
+                #   imagenProtagonista  pygame.display.flip()
+                # if d == 'agua':
+                #     fl = int(mapa.get('a','fil'))
+                #     cl = int(mapa.get('a','col'))
+                #     pantalla.blit(mM[fl][cl],[c*32,f*32])
+                #     pygame.display.flip()
+                if d == 'piso':
+                    print 'Piso'
+                    fl = int(self.mapa.get('p','fil'))
+                    cl = int(self.mapa.get('p','col'))
+                    b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_bloques.add(b)
+                    #p.blit(mM[fl][cl],[c*32,f*32])
+                    #pygame.display.flip()
+                c+=1
+            f += 1
+            c = 0
 
 if __name__ == '__main__':
     '''Programa principal'''
     pygame.init()
     pantalla = pygame.display.set_mode([ANCHO,ALTO])
     jugadores=pygame.sprite.Group()
-    bloques=pygame.sprite.Group()
 
-    fondo = pygame.image.load("Fondo.jpg")
-    mapa = configparser.ConfigParser()
-    mapa.read('mapa_prueba.mpt')
-
-    archivoMapa = mapa.get('info','img')
-    imagenMapa = pygame.image.load(archivoMapa)
     imagenProtagonista = pygame.image.load('personaje.png')
     info = imagenProtagonista.get_rect()
     mJ = Recortar(imagenProtagonista,64,64) #Matriz sprite Jugador
-    mM = Recortar_Mapa(imagenMapa,32,32) #Matriz sprite mapa
     j=Jugador(mJ)
+    jugadores = pygame.sprite.Group()
     jugadores.add(j)
 
+    nivel = Nivel(j)
+    j.nivel = nivel
+    nivel.cargarMapa(pantalla)
 
-
-    mp = mapa.get('info','mapa')
-    mp = mp.split('\n')#Fragmenta la matriz en filas
-
-
-
-    '''cargar mapa'''
-    s = []
-    c = 0
-    f = 0
-    for e in mp:
-        for i in e:
-            d = mapa.get(i,'tipo')
-
-            # if d == 'vacio':
-            #     #image = pygame.Surface([32,32])
-            #     #pantalla.blit(image, [c*32,f*32])
-            #     #pygame.display.flip()
-            # if d == 'muro':
-            #     fl = int(mapa.get('#','fil'))
-            #     cl = int(mapa.get('#','col'))
-            #     pantalla.blit(mM[fl][cl],[c*32,f*32])
-            #   imagenProtagonista  pygame.display.flip()
-            # if d == 'agua':
-            #     fl = int(mapa.get('a','fil'))
-            #     cl = int(mapa.get('a','col'))
-            #     pantalla.blit(mM[fl][cl],[c*32,f*32])
-            #     pygame.display.flip()
-            if d == 'piso':
-                fl = int(mapa.get('p','fil'))
-                cl = int(mapa.get('p','col'))
-                b = Bloque([c*32,f*32],[32,32],mM[fl][cl])
-                bloques.add(b)
-                #p.blit(mM[fl][cl],[c*32,f*32])
-                #pygame.display.flip()
-            c+=1
-        f += 1
-        c = 0
 
     fin = False
     reloj=pygame.time.Clock()
@@ -207,24 +252,11 @@ if __name__ == '__main__':
                 j.velx=0
                 j.vely=0
 
-        #colision
-        ls_col=pygame.sprite.spritecollide(j,bloques,False)
-        for b in ls_col:
-            if j.velx>0:
-                if j.accion == 2:
-                    if b.EnRango(j.rect.bottom,20):
-                        b.velx=8
-                        b.grito.play()
-                if j.accion == 6:
-                    if b.EnRango(j.rect.bottom,20):
-                        b.velx=16
-                        b.grito.play()
+
 
         #refresco de pantalla
-        bloques.update()
         jugadores.update()
-        pantalla.blit(fondo,[0,0])
-        bloques.draw(pantalla)
+        nivel.draw(pantalla)
         jugadores.draw(pantalla)
         pygame.display.flip()
-        reloj.tick(10)
+        reloj.tick(60)
