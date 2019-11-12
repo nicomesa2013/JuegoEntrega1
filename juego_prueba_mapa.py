@@ -2,8 +2,8 @@ import pygame
 import random
 import configparser
 
-ANCHO = 640
-ALTO = 480
+ANCHO = 1000
+ALTO = 600
 VERDE=[0,255,0]
 BLANCO=[255,255,255]
 NEGRO=[0,0,0]
@@ -11,7 +11,7 @@ ROJO=[255,0,0]
 
 def Recortar(imagen,a,b):
     info = imagen.get_rect()
-    print info
+
     #c = info[2]/a
     #d = info[3]/b
     m=[]
@@ -67,11 +67,10 @@ class Jugador(pygame.sprite.Sprite):
             self.vely = 0
             self.rect.y = ALTO - self.rect.height
     def Saltar(self):
-        print 'Entro a salto'
         self.rect.y += 2
         #lista_impactos_plataforma = pygame.sprite.spritecollide(self, self.nivel.listade_plataformas, False)
         self.rect.y -= 2
-        print self.rect.bottom
+        #print self.rect.bottom
         if  self.rect.bottom >= ALTO:
             self.vely = -20
 
@@ -85,6 +84,26 @@ class Jugador(pygame.sprite.Sprite):
         else:
             self.con = 0
             self.accion=11
+
+        ls_bl = pygame.sprite.spritecollide(self,bloques, False)
+        for m in ls_bl:
+            if self.vely > 0:
+                self.rect.bottom = m.rect.top
+            if self.vely < 0:
+                self.rect.top  = m.rect.bottom
+            if self.velx > 0:
+                if self.rect.right > m.rect.left:
+                    self.rect.right = m.rect.left
+                    self.velx = 0
+            if self.velx < 0:
+                if self.rect.left < m.rect.right:
+                    self.rect.left = m.rect.right
+                    self.velx=0
+                    print(m.rect.left)
+                    print(m.rect.right)
+
+        rotate = pygame.transform.rotate
+        self.image = rotate(self.image,0).convert()
 
 
 
@@ -115,6 +134,7 @@ class Bloque(pygame.sprite.Sprite):
 
 
 
+
 if __name__ == '__main__':
     '''Programa principal'''
     pygame.init()
@@ -131,7 +151,7 @@ if __name__ == '__main__':
     imagenProtagonista = pygame.image.load('personaje.png')
     info = imagenProtagonista.get_rect()
     mJ = Recortar(imagenProtagonista,64,64) #Matriz sprite Jugador
-    mM = Recortar_Mapa(imagenMapa,32,32) #Matriz sprite mapa
+    mM = Recortar_Mapa(imagenMapa,16,16) #Matriz sprite mapa
     j=Jugador(mJ)
     jugadores.add(j)
 
@@ -164,10 +184,10 @@ if __name__ == '__main__':
             #     cl = int(mapa.get('a','col'))
             #     pantalla.blit(mM[fl][cl],[c*32,f*32])
             #     pygame.display.flip()
-            if d == 'piso':
-                fl = int(mapa.get('p','fil'))
-                cl = int(mapa.get('p','col'))
-                b = Bloque([c*32,f*32],[32,32],mM[fl][cl])
+            if d == 't1':
+                fl = int(mapa.get('#','fil'))
+                cl = int(mapa.get('#','col'))
+                b = Bloque([c*16,f*16],[16,16],mM[fl][cl])
                 bloques.add(b)
                 #p.blit(mM[fl][cl],[c*32,f*32])
                 #pygame.display.flip()
