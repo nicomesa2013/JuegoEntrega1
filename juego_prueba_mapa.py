@@ -45,9 +45,9 @@ class Jugador(pygame.sprite.Sprite):
     def __init__(self,m):
         pygame.sprite.Sprite.__init__(self)
         self.m=m
-        self.accion = 11
+        self.accion = 1
         self.con=0
-        self.lim = [6,6,6,6,7,7,7,7,8,8,8,8]
+        self.lim = [8,8,7,7]
         self.image = self.m[self.con][self.accion]
 
         self.rect=self.image.get_rect()
@@ -183,7 +183,7 @@ class Nivel(object):
 
         self.jugador = jugador
         #Imagen de fondo
-        self.imagende_fondo = pygame.image.load('Fondo.jpg')
+        self.imagende_fondo = pygame.image.load('background.png')
 
         self.mapa = configparser.ConfigParser()
         self.mapa.read('mapa_prueba.mpt')
@@ -203,7 +203,7 @@ class Nivel(object):
         '''Dibujamos todo en el nivel'''
 
         '''Cargar imagen de fondo de mapa'''
-        pantalla.blit(self.imagende_fondo,[0,0])
+        pantalla.blit(self.imagende_fondo,[-1000,-600])
 
         '''Cargar todas las listas de sprites que teniamos'''
         self.listade_bloques.draw(pantalla)
@@ -231,34 +231,38 @@ class Nivel(object):
             for i in e:
                 d = self.mapa.get(i,'tipo')
 
-                # if d == 'vacio':
-                #     #image de sistemas= pygame.Surface([32,32])
-                #     #pantalla.blit(image, [c*32,f*32])
-                #     #pygame.display.flip()
-                # if d == 'muro':
-                #     fl = int(mapa.get('#','fil'))
-                #     cl = int(mapa.get('#','col'))
-                #     pantalla.blit(mM[fl][cl],[c*32,f*32])
-                #   imagenProtagonista  pygame.display.flip()
-                # if d == 'agua':
-                #     fl = int(mapa.get('a','fil'))
-                #     cl = int(mapa.get('a','col'))
-                #     pantalla.blit(mM[fl][cl],[c*32,f*32])
-                #     pygame.display.flip()
-                if d == 'piso':
-                    fl = int(self.mapa.get('p','fil'))
-                    cl = int(self.mapa.get('p','col'))
+                if d == 'vacio':
+                    #image de sistemas= pygame.Surface([32,32])
+                    #pantalla.blit(image, [c*32,f*32])
+                    pygame.display.flip()
+                if d == 'terreno1':
+                    fl = int(self.mapa.get('!','fil'))
+                    cl = int(self.mapa.get('!','col'))
+                    b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_bloques.add(b)
+                if d == 'terreno2':
+                    fl = int(self.mapa.get('@','fil'))
+                    cl = int(self.mapa.get('@','col'))
+                    b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_bloques.add(b)
+                if d == 'terreno3':
+                    fl = int(self.mapa.get('#','fil'))
+                    cl = int(self.mapa.get('#','col'))
+                    b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_bloques.add(b)
+                if d == 'terreno4':
+                    fl = int(self.mapa.get('$','fil'))
+                    cl = int(self.mapa.get('$','col'))
                     b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
                     self.listade_bloques.add(b)
                 if d == 'piso movil':
-
                     fl = int(self.mapa.get('m','fil'))
                     cl = int(self.mapa.get('m','col'))
                     bm = Bloque_Movimiento([c*32,f*32],[32,32],self.mM[fl][cl])
                     bm.limite_inferior = bm.rect.centery - 100
                     bm.limite_superior = bm.rect.centery + 100
-                    print 'limite_inferior:',bm.limite_inferior,'limite superior',bm.limite_superior
-                    print 'bottom:',bm.rect.bottom,  'top',bm.rect.top
+                    #print 'limite_inferior:',bm.limite_inferior,'limite superior',bm.limite_superior
+                    #print 'bottom:',bm.rect.bottom,  'top',bm.rect.top
                     bm.vely = 2
                     bm.jugador = self.jugador
                     self.listade_bloques.add(bm)
@@ -274,7 +278,7 @@ if __name__ == '__main__':
 
     imagenProtagonista = pygame.image.load('personaje.png')
     info = imagenProtagonista.get_rect()
-    mJ = Recortar(imagenProtagonista,64,64) #Matriz sprite Jugador
+    mJ = Recortar(imagenProtagonista,32,48) #Matriz sprite Jugador
     j=Jugador(mJ)
     jugadores = pygame.sprite.Group()
     jugadores.add(j)
@@ -294,11 +298,11 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RIGHT:
                     j.velx=5
                     j.vely=0
-                    j.accion = 11
+                    j.accion = 0
                 if event.key == pygame.K_LEFT:
                     j.velx=-5
                     j.vely=0
-                    j.accion = 9
+                    j.accion = 1
                 if event.key == pygame.K_UP:
                     j.velx=0
                     j.Saltar()
@@ -312,7 +316,7 @@ if __name__ == '__main__':
                     j.con = 0
                 if event.key == pygame.K_c:
                     #patada
-                    j.accion=6
+                    j.accion=2
                     j.con = 0
             if event.type == pygame.KEYUP:
                 j.velx=0
@@ -341,4 +345,4 @@ if __name__ == '__main__':
         jugadores.draw(pantalla)
 
         pygame.display.flip()
-        reloj.tick(60)
+        reloj.tick(30)
