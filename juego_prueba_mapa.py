@@ -3,7 +3,7 @@ import random
 import configparser
 
 ANCHO = 1000
-ALTO = 600
+ALTO = 560
 VERDE=[0,255,0]
 BLANCO=[255,255,255]
 NEGRO=[0,0,0]
@@ -11,7 +11,6 @@ ROJO=[255,0,0]
 
 def Recortar(imagen,a,b):
     info = imagen.get_rect()
-
     #c = info[2]/a
     #d = info[3]/b
     m=[]
@@ -46,9 +45,9 @@ class Jugador(pygame.sprite.Sprite):
     def __init__(self,m):
         pygame.sprite.Sprite.__init__(self)
         self.m=m
-        self.accion = 11
+        self.accion = 1
         self.con=0
-        self.lim = [6,6,6,6,7,7,7,7,8,8,8,8]
+        self.lim = [8,8,7,7]
         self.image = self.m[self.con][self.accion]
         self.rect=self.image.get_rect()
         self.velx=0
@@ -83,8 +82,9 @@ class Jugador(pygame.sprite.Sprite):
             self.con +=1
         else:
             self.con = 0
-            self.accion=11
+            self.accion = 1
 
+        #colision
         ls_bl = pygame.sprite.spritecollide(self,bloques, False)
         for m in ls_bl:
             if self.vely > 0:
@@ -99,8 +99,6 @@ class Jugador(pygame.sprite.Sprite):
                 if self.rect.left < m.rect.right:
                     self.rect.left = m.rect.right
                     self.velx=0
-                    print(m.rect.left)
-                    print(m.rect.right)
 
         rotate = pygame.transform.rotate
         self.image = rotate(self.image,0).convert()
@@ -142,7 +140,7 @@ if __name__ == '__main__':
     jugadores=pygame.sprite.Group()
     bloques=pygame.sprite.Group()
 
-    fondo = pygame.image.load("Fondo.jpg")
+    background = pygame.image.load("background.png")
     mapa = configparser.ConfigParser()
     mapa.read('mapa_prueba.mpt')
 
@@ -150,8 +148,8 @@ if __name__ == '__main__':
     imagenMapa = pygame.image.load(archivoMapa)
     imagenProtagonista = pygame.image.load('personaje.png')
     info = imagenProtagonista.get_rect()
-    mJ = Recortar(imagenProtagonista,64,64) #Matriz sprite Jugador
-    mM = Recortar_Mapa(imagenMapa,16,16) #Matriz sprite mapa
+    mJ = Recortar(imagenProtagonista,32,48) #Matriz sprite Jugador
+    mM = Recortar_Mapa(imagenMapa,32,32) #Matriz sprite mapa
     j=Jugador(mJ)
     jugadores.add(j)
 
@@ -170,27 +168,30 @@ if __name__ == '__main__':
         for i in e:
             d = mapa.get(i,'tipo')
 
-            # if d == 'vacio':
-            #     #image = pygame.Surface([32,32])
-            #     #pantalla.blit(image, [c*32,f*32])
-            #     #pygame.display.flip()
-            # if d == 'muro':
-            #     fl = int(mapa.get('#','fil'))
-            #     cl = int(mapa.get('#','col'))
-            #     pantalla.blit(mM[fl][cl],[c*32,f*32])
-            #   imagenProtagonista  pygame.display.flip()
-            # if d == 'agua':
-            #     fl = int(mapa.get('a','fil'))
-            #     cl = int(mapa.get('a','col'))
-            #     pantalla.blit(mM[fl][cl],[c*32,f*32])
-            #     pygame.display.flip()
+            if d == 'vacio':
+                image = pygame.Surface([32,32])
+                pantalla.blit(image, [c*32,f*32])
+                pygame.display.flip()
             if d == 't1':
                 fl = int(mapa.get('#','fil'))
                 cl = int(mapa.get('#','col'))
-                b = Bloque([c*16,f*16],[16,16],mM[fl][cl])
+                b = Bloque([c*32,f*32],[32,32],mM[fl][cl])
                 bloques.add(b)
-                #p.blit(mM[fl][cl],[c*32,f*32])
-                #pygame.display.flip()
+            if d == 't2':
+                fl = int(mapa.get('@','fil'))
+                cl = int(mapa.get('@','col'))
+                b = Bloque([c*32,f*32],[32,32],mM[fl][cl])
+                bloques.add(b)
+            if d == 't3':
+                fl = int(mapa.get('!','fil'))
+                cl = int(mapa.get('!','col'))
+                b = Bloque([c*32,f*32],[32,32],mM[fl][cl])
+                bloques.add(b)
+            if d == 'tierra':
+                fl = int(mapa.get('t','fil'))
+                cl = int(mapa.get('t','col'))
+                b = Bloque([c*32,f*32],[32,32],mM[fl][cl])
+                bloques.add(b)
             c+=1
         f += 1
         c = 0
@@ -217,33 +218,20 @@ if __name__ == '__main__':
                     j.vely=10
                 if event.key == pygame.K_x:
                     #golpe
-                    j.accion=2
+                    j.accion=3
                     j.con = 0
                 if event.key == pygame.K_c:
                     #patada
-                    j.accion=6
+                    j.accion=2
                     j.con = 0
             if event.type == pygame.KEYUP:
                 j.velx=0
                 j.vely=0
 
-        #colision
-        ls_col=pygame.sprite.spritecollide(j,bloques,False)
-        for b in ls_col:
-            if j.velx>0:
-                if j.accion == 2:
-                    if b.EnRango(j.rect.bottom,20):
-                        b.velx=8
-                        b.grito.play()
-                if j.accion == 6:
-                    if b.EnRango(j.rect.bottom,20):
-                        b.velx=16
-                        b.grito.play()
-
         #refresco de pantalla
         bloques.update()
         jugadores.update()
-        pantalla.blit(fondo,[0,0])
+        pantalla.blit(background,[-800,-800])
         bloques.draw(pantalla)
         jugadores.draw(pantalla)
         pygame.display.flip()
