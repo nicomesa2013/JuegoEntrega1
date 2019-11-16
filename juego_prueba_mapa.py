@@ -52,7 +52,7 @@ class Jugador(pygame.sprite.Sprite):
 
         self.rect=self.image.get_rect()
         self.rect.x = 700
-        self.rect.y = 400
+        self.rect.y = 700
         self.velx=0
         self.vely=0
 
@@ -83,9 +83,18 @@ class Jugador(pygame.sprite.Sprite):
         self.image=self.m[self.con][self.accion]
         if self.con < self.lim[self.accion] and self.velx != 0:
             self.con +=1
+        elif self.accion == 2:
+            if self.con < self.lim[self.accion]:
+                self.con +=1
+            else:
+                self.accion = 0
+        elif self.accion == 3:
+            if self.con < self.lim[self.accion]:
+                self.con +=1
+            else:
+                self.accion = 1
         else:
             self.con = 0
-            #self.accion=11
         '''Revision de impactos de juador con entorno'''
         lista_impactos_bloque = pygame.sprite.spritecollide(self, self.nivel.listade_bloques,False)
         for bloque in lista_impactos_bloque:
@@ -104,6 +113,10 @@ class Jugador(pygame.sprite.Sprite):
             elif self.vely < 0:
                 self.rect.top = bloque.rect.bottom
             self.vely = 0
+
+    def pos(self):
+        p=[self.rect.x,self.rect.y]
+        return p
 
 
 class Bloque(pygame.sprite.Sprite):
@@ -173,6 +186,19 @@ class Bloque_Movimiento(Bloque):
         if self.rect.bottom < self.limite_inferior or self.rect.top > self.limite_superior:
             self.vely *= -1
 
+class Bala(pygame.sprite.Sprite):
+    def __init__(self,pos,n):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([10,15])
+        self.image.fill(ROJO)
+        self.rect=self.image.get_rect()
+        self.rect.x=pos[0]
+        self.rect.y=pos[1]+20
+        self.velx = n
+
+    def update(self):
+        self.rect.x+=self.velx
+
 
 
 class Nivel(object):
@@ -183,43 +209,66 @@ class Nivel(object):
 
         self.jugador = jugador
         #Imagen de fondo
-        self.imagende_fondo = pygame.image.load('background.png')
+        self.imagende_fondo = pygame.image.load("background.png")
+        #info = background.get_rect()
+        self.fx = -100
+        self.fy = -500
+        self.fvelx = 0
+        self.fvely = 0
+        self.limderecha = ANCHO-100
+        self.limizq = 100
+        self.limabajo = ALTO
+        self.limarriba = 100
+
+        self.info = self.imagende_fondo.get_rect()
+        self.anf = self.info[2]
+        self.alf = self.info[3]
 
         self.mapa = configparser.ConfigParser()
         self.mapa.read('mapa_prueba.mpt')
         archivoMapa = self.mapa.get('info','img')
         imagenMapa = pygame.image.load(archivoMapa)
         self.mM = Recortar_Mapa(imagenMapa,32,32)
-        '''Limite/desplazamiento del nivel'''
-        self.desplazar_escenario = 0
-        self.limitedel_nivel = -1000
+        #Limite/desplazamiento del nivel
+        '''self.desplazar_escenario = 0
+        self.limitedel_nivel = -1000'''
 
 
     def update(self):
         self.listade_bloques.update()
         self.listade_enemigos.update()
 
+
     def draw(self,pantalla):
         '''Dibujamos todo en el nivel'''
 
         '''Cargar imagen de fondo de mapa'''
-        pantalla.blit(self.imagende_fondo,[-1000,-600])
+        pantalla.blit(self.imagende_fondo,[self.fx,self.fy])
 
         '''Cargar todas las listas de sprites que teniamos'''
         self.listade_bloques.draw(pantalla)
         self.listade_bloques_movi.draw(pantalla)
         self.listade_enemigos.draw(pantalla)
 
-    def enscenario_desplazar(self,desplazar_x):
-        '''Hacer desplazamiento del escenario Izquierda/Derecha'''
+
+
+    def escenario_desplazar(self):
+        #desplazamiento de bloques en x
+        for b in self.listade_bloques:
+            if self.fx > (ANCHO-self.anf):
+                b.velx = self.fvelx
+            else:
+                b.velx = 0
+        '''def enscenario_desplazar(self,desplazar_x):
+        #Hacer desplazamiento del escenario Izquierda/Derecha
         self.desplazar_escenario += desplazar_x
 
-        '''Movemos todas las listas de sprites'''
+        #Movemos todas las listas de sprites
         for plataforma in self.listade_bloques:
             plataforma.rect.x += desplazar_x
 
         for enemigo in self.listade_enemigos:
-            enemigo.rec.x += desplazar_x
+            enemigo.rec.x += desplazar_x'''
 
     def cargarMapa(self,pantalla):
         mp = self.mapa.get('info','mapa')
@@ -274,13 +323,13 @@ if __name__ == '__main__':
     '''Programa principal'''
     pygame.init()
     pantalla = pygame.display.set_mode([ANCHO,ALTO])
-    jugadores=pygame.sprite.Group()
 
     imagenProtagonista = pygame.image.load('personaje.png')
     info = imagenProtagonista.get_rect()
     mJ = Recortar(imagenProtagonista,32,48) #Matriz sprite Jugador
     j=Jugador(mJ)
     jugadores = pygame.sprite.Group()
+    balas=pygame.sprite.Group()
     jugadores.add(j)
 
     nivel = Nivel(j)
@@ -314,35 +363,89 @@ if __name__ == '__main__':
                     #golpe
                     j.accion=2
                     j.con = 0
+                    disparo=Bala(j.pos(),5)
+                    balas.add(disparo)
                 if event.key == pygame.K_c:
                     #patada
-                    j.accion=2
+                    j.accion=3
                     j.con = 0
+                    disparo=Bala(j.pos(),-5)
+                    balas.add(disparo)
             if event.type == pygame.KEYUP:
                 j.velx=0
                 j.vely=0
+                nivel.fvelx = 0
+                nivel.fvely = 0
+
+        #movimiento fondo
+        if j.rect.left > nivel.limderecha:
+            if j.velx > 0:
+                j.rect.left = nivel.limderecha
+                nivel.fvelx = -5
+            else:
+                nivel.fvelx = 0
+
+        if j.rect.right < nivel.limizq:
+            if j.velx < 0:
+                j.rect.right = nivel.limizq
+                nivel.fvelx = 5
+            else:
+                nivel.fvelx = 0
+
+        for b in nivel.listade_bloques:
+            #colision de bala con bloque
+            ls=pygame.sprite.spritecollide(b,balas,True)
+            for b in ls:
+                print ('colision')
+                balas.remove(b)
+
+        '''for b in balas:
+            #colision de bala con bloque
+            ls=pygame.sprite.spritecollide(b,nivel.listade_bloques,True)
+            for e in ls:
+                print ('colision')
+                balas.remove(b)'''
 
 
+        #desplazamiento de bloques en x
+        '''for b in nivel.listade_bloques:
+            if nivel.fx > (ANCHO-nivel.anf):
+                b.velx = nivel.fvelx
+            else:
+                b.velx = 0'''
+
+
+
+        #desplazamiento de bloques en y
+        '''for b in bloques:
+            if fy > (ALTO-alf):
+                b.vely = fvely
+            else:
+                b.vely = 0'''
 
         #refresco de pantalla
         jugadores.update()
+        balas.update()
         nivel.update()
+        nivel.escenario_desplazar()
 
-        ''' Si el jugador se aproxima a la derecha'''
-        if j.rect.x >= 800:
+        # Si el jugador se aproxima a la derecha
+        '''if j.rect.x >= 800:
             diff = j.rect.x - 800
             j.rect.x = 800
-            nivel.enscenario_desplazar(-diff)
+            #nivel.enscenario_desplazar(-diff)'''
 
-        ''' Si el jugador se aproxima a la derecha'''
-        if j.rect.x <= 200:
+        # Si el jugador se aproxima a la derecha
+        '''if j.rect.x <= 200:
             diff = 200 - j.rect.x
             j.rect.x = 200
-            nivel.enscenario_desplazar(diff)
+            #nivel.enscenario_desplazar(diff)'''
 
-        '''Zona de dibujado'''
+        #Zona de dibujado
         nivel.draw(pantalla)
         jugadores.draw(pantalla)
-
+        balas.draw(pantalla)
+        nivel.fx += nivel.fvelx
+        nivel.fy += nivel.fvely
         pygame.display.flip()
         reloj.tick(30)
