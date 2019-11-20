@@ -150,10 +150,9 @@ class Jugador(pygame.sprite.Sprite):
 
 
 class Proyectil(pygame.sprite.Sprite):
-    def __init__(self,pos,n,COLOR):
+    def __init__(self,pos,n,imagen_proyectil):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface([10,15])
-        self.image.fill(COLOR)
+        self.image = imagen_proyectil
         self.rect=self.image.get_rect()
         self.rect.x=pos[0]
         self.rect.y=pos[1]+20
@@ -164,6 +163,7 @@ class Proyectil(pygame.sprite.Sprite):
         self.rect.x+=self.velx
 
 class Enemigo1(pygame.sprite.Sprite):
+    jugador = None
     def __init__(self,m,posX, posY):
         pygame.sprite.Sprite.__init__(self)
         self.m=m
@@ -173,6 +173,7 @@ class Enemigo1(pygame.sprite.Sprite):
         self.image = self.m[self.con][self.accion]
 
         self.actualizacion = pygame.time.get_ticks()
+        self.actualizacion2 = pygame.time.get_ticks()
 
         self.estado = True
         self.vidas = 3
@@ -180,22 +181,56 @@ class Enemigo1(pygame.sprite.Sprite):
         self.rect=self.image.get_rect()
         self.rect.x = posX
         self.rect.y = posY
+
+        self.proyectil_e1 = pygame.image.load('projectil_e1.png')
+        self.proyectil_e2 = pygame.image.load('projectil_e2.png')
+
+        self.izquierda = True
         self.cont = 0
 
+    def posjugador(self):
+        if self.rect.x < self.jugador.rect.x:
+            self.izquierda = True
+        else:
+            self.izquierda = False
+
     def update(self):
+        self.posjugador()
+        self.ataque()
         '''Seleccion de sprite'''
+        self.mov()
+
+    def pos(self):
+        p=[self.rect.x,self.rect.y]
+        return p
+
+    def ataque(self):
+        #proyectil enemigo1
+        if self.actualizacion2 + 4000 < pygame.time.get_ticks() and self.estado == True:
+            e = self.pos()
+            if self.izquierda == True:
+                self.accion = 3
+                self.con = 0
+                disparo2=Proyectil([e[0]+20,e[1]],5,self.proyectil_e1)
+                proyectil_enemigo.add(disparo2)
+            else:
+                self.accion = 1
+                self.con = 0
+                disparo2=Proyectil([e[0]+20,e[1]],-5,self.proyectil_e2)
+                proyectil_enemigo.add(disparo2)
+            self.actualizacion2 = pygame.time.get_ticks()
+    def mov(self):
         if self.actualizacion + 75 < pygame.time.get_ticks():
             self.image = self.m[self.con][self.accion]
             if self.con < self.lim[self.accion]:
                 self.con +=1
             else:
+                if self.izquierda == True:
+                    self.accion = 2
+                else:
+                    self.accion = 0
                 self.con = 0
-                self.accion = 0
             self.actualizacion= pygame.time.get_ticks()
-
-    def pos(self):
-        p=[self.rect.x,self.rect.y]
-        return p
 
 class Enemigo2(pygame.sprite.Sprite):
     jugador = None
@@ -275,8 +310,6 @@ class Enemigo2(pygame.sprite.Sprite):
 
         self.col_iz()
         self.col_der()
-
-
 
         if self.actualizacion + 150 < pygame.time.get_ticks():
             self.image = self.m[self.con][self.accion]
@@ -474,11 +507,11 @@ if __name__ == '__main__':
     imagenenemigo1 = pygame.image.load('enemigo1.png')
     recorte_enemigo1=Recortar(imagenenemigo1,64,64,0)
     enemigo1A = Enemigo1(recorte_enemigo1,100,450)
+    enemigo1A.jugador = j
     enemigo1B = Enemigo1(recorte_enemigo1,1000,450)
+    enemigo1B.jugador = j
     enemigos1.add(enemigo1A)
     enemigos1.add(enemigo1B)
-    proyectil=pygame.sprite.Group()
-    proyectil_enemigo=pygame.sprite.Group()
 
     enemigos2 = pygame.sprite.Group()
     imagenenemigo1 = pygame.image.load('enemigo2.png')
@@ -487,11 +520,18 @@ if __name__ == '__main__':
     enemigo2A.jugador = j
     enemigos2.add(enemigo2A)
 
+    proyectil=pygame.sprite.Group()
+    proyectil_j1 = pygame.image.load('projectil_j1.png')
+    proyectil_j2 = pygame.image.load('projectil_j2.png')
+    proyectil_enemigo=pygame.sprite.Group()
+
+
+
     nivel = Nivel(j)
     j.nivel = nivel
     nivel.cargarMapa(pantalla)
 
-    actualizacion = pygame.time.get_ticks()
+    #actualizacion = pygame.time.get_ticks()
 
 
     fin = False
@@ -521,24 +561,26 @@ if __name__ == '__main__':
                     j.accion=2
                     j.con = 0
                     if j.derecha == True:
-                        disparo=Proyectil(j.pos(),5,ROJO)
+                        disparo=Proyectil(j.pos(),5,proyectil_j1)
                         disparo.rect.x += 20
                         j.accion=2
                         j.con = 0
                     else:
-                        disparo=Proyectil(j.pos(),-5,ROJO)
+                        disparo=Proyectil(j.pos(),-5,proyectil_j2)
+                        disparo.rect.x -= 20
                         j.accion=3
                         j.con = 0
                     proyectil.add(disparo)
                 if event.key == pygame.K_c:
                     #patada
                     if j.derecha == True:
-                        disparo=Proyectil(j.pos(),5,ROJO)
+                        disparo=Proyectil(j.pos(),5,proyectil_j1)
                         disparo.rect.x += 20
                         j.accion=2
                         j.con = 0
                     else:
-                        disparo=Proyectil(j.pos(),-5,ROJO)
+                        disparo=Proyectil(j.pos(),-5,proyectil_j2)
+                        disparo.rect.x -= 20
                         j.accion=3
                         j.con = 0
                     proyectil.add(disparo)
@@ -556,6 +598,10 @@ if __name__ == '__main__':
                 enemigo_1.rect.x += -diff
             for enemigo_2 in enemigos2:
                 enemigo_2.rect.x += -diff
+            for proyectil1_j in proyectil:
+                proyectil1_j.rect.x += -diff
+            for proyectil1_e in proyectil_enemigo:
+                proyectil1_e.rect.x += -diff
 
 
         # Si el jugador se aproxima a la derecha
@@ -567,7 +613,11 @@ if __name__ == '__main__':
                 enemigo_1.rect.x += diff
             for enemigo_2 in enemigos2:
                 enemigo_2.rect.x += diff
-                #enemigo_2.distancia += diff
+            for proyectil1_j in proyectil:
+                proyectil1_j.rect.x += diff
+            for proyectil1_e in proyectil_enemigo:
+                proyectil1_e.rect.x += diff
+
 
 
         #colision de proyectil con bloque
@@ -606,16 +656,6 @@ if __name__ == '__main__':
                 e_arana.vidas -= 1
                 if e_arana.vidas == 0:
                     enemigos2.remove(e_arana)
-
-
-        #proyectil enemigo1
-        if actualizacion + 4000 < pygame.time.get_ticks() and enemigo1A.estado == True:
-            e = enemigo1A.pos()
-            enemigo1A.accion = 3
-            enemigo1A.con = 0
-            disparo2=Proyectil([e[0]+20,e[1]],5 ,AZUL)
-            proyectil_enemigo.add(disparo2)
-            actualizacion = pygame.time.get_ticks()
 
         #Zona de dibujado
         nivel.draw(pantalla)
