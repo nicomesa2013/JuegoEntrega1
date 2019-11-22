@@ -1,6 +1,7 @@
 import pygame
 import random
 import configparser
+from pygame.locals import *
 
 ANCHO = 1000
 ALTO = 600
@@ -52,15 +53,24 @@ class Jugador(pygame.sprite.Sprite):
         self.image = self.m[self.con][self.accion]
 
         self.rect=self.image.get_rect()
-        self.rect.x = 300
-        self.rect.y = 500
+        self.rect.x = 200
+        self.rect.y = 875
         self.velx=0
         self.vely=0
         self.movimiento=5
         self.csalto = 8
 
+        self.sonido_pasos=pygame.mixer.Sound('audio/pasos.ogg')
+        self.sonido_proyectil=pygame.mixer.Sound('audio/proyectil_j.ogg')
+        self.sonido_mejora_proyectil=pygame.mixer.Sound('audio/mejora_proyectil.ogg')
+        self.sonido_pocion=pygame.mixer.Sound('audio/sonido_pocion.ogg')
+        self.sonido_vida=pygame.mixer.Sound('audio/sonido_vida.ogg')
+        self.sonido_jugador=pygame.mixer.Sound('audio/sonido_jugador.ogg')
+
+        self.cont_enemigos = 0
+
         self.puntos_de_vida = pygame.image.load('vida.png')
-        self.vidas = 3
+        self.vidas = 5
 
         self.mejora = pygame.image.load('proyectil_j1.png')
         self.mejora_pocion = pygame.image.load('proyectil_j1.png')
@@ -74,6 +84,8 @@ class Jugador(pygame.sprite.Sprite):
         self.cont = 0
 
         self.nivel = None
+
+        self.actualizacion_damage = pygame.time.get_ticks()
 
 
     def Gravedad(self):
@@ -153,16 +165,24 @@ class Jugador(pygame.sprite.Sprite):
             else:
                 self.accion = 1
         else:
+            if self.vely == 1 and self.con != 0:
+                self.sonido_pasos.play()
             self.con = 0
 
-    def col_enemigo(self,n):
-        while self.cont < 20:
+
+    def col_enemigo(self):
+        if self.actualizacion_damage + 1250 < pygame.time.get_ticks():
+            self.sonido_jugador.play()
+            self.vidas -= 1
+            self.actualizacion_damage = pygame.time.get_ticks()
+
+        '''while self.cont < 20:
             self.cont += 1
             self.velx = n
             self.rect.x += self.velx
             self.mov()
         self.cont = 0
-        self.velx = n*-1
+        self.velx = n*-1'''
 
 
 class Proyectil(pygame.sprite.Sprite):
@@ -193,6 +213,8 @@ class Enemigo1(pygame.sprite.Sprite):
 
         self.estado = True
         self.vidas = 3
+
+        self.sonido_enemigo1=pygame.mixer.Sound('audio/sonido_enemigo1.ogg')
 
         self.rect=self.image.get_rect()
         self.rect.x = posX
@@ -263,6 +285,9 @@ class Enemigo2(pygame.sprite.Sprite):
         self.estado = True
         self.vidas = 3
 
+        self.sonido_damage=pygame.mixer.Sound('audio/spider.ogg')
+        self.sonido_damage2=pygame.mixer.Sound('audio/spider2.ogg')
+
         self.rect=self.image.get_rect()
         self.rect.x = posX
         self.rect.y = posY
@@ -279,30 +304,33 @@ class Enemigo2(pygame.sprite.Sprite):
         if hit:
             if self.rect.left > self.jugador.rect.right:
                 self.jugador.rect.right = self.rect.left
-                self.jugador.col_enemigo(3)
-                self.jugador.vidas -= 1
+                self.jugador.col_enemigo()
 
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
             if self.rect.left < self.jugador.rect.x:
                 self.jugador.rect.left = self.rect.right
-                self.jugador.col_enemigo(3)
-                self.jugador.vidas -= 1
+                self.jugador.col_enemigo()
 
     def col_der(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
             if self.rect.left < self.jugador.rect.right:
                 self.jugador.rect.right = self.rect.left
-                self.jugador.col_enemigo(-3)
-                self.jugador.vidas -= 1
+                self.jugador.col_enemigo()
 
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
             if self.rect.left > self.jugador.rect.x:
                 self.jugador.rect.left = self.rect.right
-                self.jugador.col_enemigo(-3)
-                self.jugador.vidas -= 1
+                self.jugador.col_enemigo()
+
+    def col_top(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.jugador.rect.bottom > self.rect.top:
+                self.jugador.rect.bottom = self.rect.top
+                self.jugador.col_enemigo()
 
     def update(self):
         if self.izquierda == True:
@@ -324,6 +352,7 @@ class Enemigo2(pygame.sprite.Sprite):
                 self.accion = 0
                 self.izquierda = True
 
+        self.col_top()
         self.col_iz()
         self.col_der()
 
@@ -362,7 +391,7 @@ class Spawner(pygame.sprite.Sprite):
     def __init__(self,m,posX,posY,tipo,jugador):
         pygame.sprite.Sprite.__init__(self)
         self.m=m
-        self.accion = 0
+        self.accion = 2
         self.con=0
         self.lim = [7,7,5]
         self.image = self.m[self.con][self.accion]
@@ -425,45 +454,55 @@ class Modificadores(pygame.sprite.Sprite):
     def mejora_proyectil(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
+            j.sonido_mejora_proyectil.play()
             self.kill()
             j.obtener_mejora = True
             j.proyectil_tipo = 1
+
     def mejora_vida(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
+            j.sonido_vida.play()
             self.kill()
             j.vidas += 1
+
     def pocion_damage(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
+            j.sonido_pocion.play()
             self.kill()
             j.vidas -= 1
-            j.mejora_pocion = self.image
-            j.obtener_pocion = True
+
 
     def pocion_slow(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
+            j.sonido_pocion.play()
             self.kill()
             j.movimiento = 2
             j.mejora_pocion = self.image
             j.obtener_pocion = True
+
     def pocion_speed(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
+            j.sonido_pocion.play()
             self.kill()
             j.movimiento = 8
             j.csalto = 12
             j.mejora_pocion = self.image
             j.obtener_pocion = True
+
     def pocion_snormal(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
+            j.sonido_pocion.play()
             self.kill()
             j.movimiento = 5
             j.csalto = 8
             j.mejora_pocion = self.image
             j.obtener_pocion = True
+
 
     def update(self):
         if self.tipo == 1:
@@ -532,10 +571,10 @@ class Nivel(object):
         #self.enemigo1 = pygame.image.load("enemigo1.png")
         #info = background.get_rect()
         self.fx = 0
-        self.fy = -725
+        self.fy = -397
         self.fvelx = 0
         self.fvely = 0
-        self.limderecha = ANCHO-100
+        self.limderecha = ANCHO-200
         self.limizq = 100
         self.limabajo = ALTO-100
         self.limarriba = 100
@@ -639,6 +678,10 @@ if __name__ == '__main__':
     pygame.init()
     pantalla = pygame.display.set_mode([ANCHO,ALTO])
 
+    musica_juego=pygame.mixer.Sound('audio/musica_juego.ogg')
+    musica_juego.set_volume(0.9)
+    musica_juego.play()
+
     imagenProtagonista = pygame.image.load('personajev2.png')
     #info = imagenProtagonista.get_rect()
     mJ = Recortar(imagenProtagonista,32,56,3) #Matriz sprite Jugador
@@ -650,22 +693,44 @@ if __name__ == '__main__':
     enemigos1 = pygame.sprite.Group()
     imagenenemigo1 = pygame.image.load('enemigo1.png')
     recorte_enemigo1=Recortar(imagenenemigo1,64,64,0)
-    enemigo1A = Enemigo1(recorte_enemigo1,100,450)
+    enemigo1A = Enemigo1(recorte_enemigo1,150,670)
     enemigo1A.jugador = j
-    enemigo1B = Enemigo1(recorte_enemigo1,1000,450)
+    enemigo1B = Enemigo1(recorte_enemigo1,120,420)
     enemigo1B.jugador = j
+    enemigo1C = Enemigo1(recorte_enemigo1,1500,850)
+    enemigo1C.jugador = j
+    enemigo1D = Enemigo1(recorte_enemigo1,2220,750)
+    enemigo1D.jugador = j
+    enemigo1E = Enemigo1(recorte_enemigo1,2450,750)
+    enemigo1E.jugador = j
+    enemigo1F = Enemigo1(recorte_enemigo1,2150,600)
+    enemigo1F.jugador = j
+    enemigo1G = Enemigo1(recorte_enemigo1,2500,600)
+    enemigo1G.jugador = j
     enemigos1.add(enemigo1A)
     enemigos1.add(enemigo1B)
+    enemigos1.add(enemigo1C)
+    enemigos1.add(enemigo1D)
+    enemigos1.add(enemigo1E)
+    enemigos1.add(enemigo1F)
+    enemigos1.add(enemigo1G)
+
 
     enemigos2 = pygame.sprite.Group()
     imagenenemigo2 = pygame.image.load('enemigo2.png')
     recorte_enemigo2=Recortar(imagenenemigo2,66,40,0)
-    enemigo2A = Enemigo2(recorte_enemigo2,800,570)
+    enemigo2A = Enemigo2(recorte_enemigo2,1000,790)
     enemigo2A.jugador = j
     enemigos2.add(enemigo2A)
-    '''enemigo2B = Enemigo2(recorte_enemigo2,2000,500)
+    enemigo2B = Enemigo2(recorte_enemigo2,1500,730)
     enemigo2B.jugador = j
-    enemigos2.add(enemigo2B)'''
+    enemigos2.add(enemigo2B)
+    enemigo2C = Enemigo2(recorte_enemigo2,1700,730)
+    enemigo2C.jugador = j
+    enemigos2.add(enemigo2C)
+    enemigo2D = Enemigo2(recorte_enemigo2,2000,505)
+    enemigo2D.jugador = j
+    enemigos2.add(enemigo2D)
 
 
     proyectil=pygame.sprite.Group()
@@ -677,36 +742,43 @@ if __name__ == '__main__':
     proyectil_enemigo=pygame.sprite.Group()
 
     modificadores = pygame.sprite.Group()
-    item_mejora = Modificadores([200,550],proyectil_j1,1)
+    item_mejora = Modificadores([325,275],proyectil_j2,1)
     item_mejora.jugador = j
     modificadores.add(item_mejora)
 
     vida_imagen = pygame.image.load('vida.png')
-    item_vida = Modificadores([500,500],vida_imagen,2)
+    item_vida = Modificadores([1325,790],vida_imagen,2)
     item_vida.jugador = j
+    item_vida2 = Modificadores([2550,500],vida_imagen,2)
+    item_vida2.jugador = j
     modificadores.add(item_vida)
+    modificadores.add(item_vida2)
 
     imagen_pocion_damage = pygame.image.load('pocion_damage.png')
-    item_pocion_damage = Modificadores([600,500],imagen_pocion_damage,3)
+    item_pocion_damage = Modificadores([1000,900],imagen_pocion_damage,3)
     item_pocion_damage.jugador = j
     modificadores.add(item_pocion_damage)
 
     imagen_pocion_slow = pygame.image.load('pocion_slow.png')
-    item_pocion_slow = Modificadores([150,500],imagen_pocion_slow,4)
+    item_pocion_slow = Modificadores([1600,900],imagen_pocion_slow,4)
     item_pocion_slow.jugador = j
     modificadores.add(item_pocion_slow)
 
     imagen_pocion_speed = pygame.image.load('pocion_speed.png')
-    item_pocion_speed = Modificadores([150,550],imagen_pocion_speed,5)
+    item_pocion_speed = Modificadores([130,705],imagen_pocion_speed,5)
     item_pocion_speed.jugador = j
+    item_pocion_speed2 = Modificadores([2000,900],imagen_pocion_speed,5)
+    item_pocion_speed2.jugador = j
     modificadores.add(item_pocion_speed)
+    modificadores.add(item_pocion_speed2)
 
     imagen_pocion_snormal = pygame.image.load('pocion_snormal.png')
-    item_pocion_snormal = Modificadores([200,550],imagen_pocion_snormal,6)
+    item_pocion_snormal = Modificadores([560,755],imagen_pocion_snormal,6)
     item_pocion_snormal.jugador = j
+    item_pocion_snormal2 = Modificadores([1550,735],imagen_pocion_snormal,6)
+    item_pocion_snormal2.jugador = j
     modificadores.add(item_pocion_snormal)
-
-
+    modificadores.add(item_pocion_snormal2)
 
 
     portales = pygame.sprite.Group()
@@ -718,11 +790,8 @@ if __name__ == '__main__':
     recorte_arana=Recortar(portal_arana,32,64,0)
     portal_aranas = Spawner(recorte_arana,2200,500,1,j)
 
-
-
-
-    portales.add(portal_magos)
-    portales.add(portal_aranas)
+    #portales.add(portal_magos)
+    #portales.add(portal_aranas)
 
 
     nivel = Nivel(j)
@@ -772,16 +841,21 @@ if __name__ == '__main__':
                     if j.derecha == True:
                         if j.proyectil_tipo == 0:
                             disparo=Proyectil(j.pos(),5,proyectil1_j1)
+                            j.sonido_proyectil.play()
                         else:
                             disparo=Proyectil(j.pos(),5,proyectil_j1)
+                            j.sonido_proyectil.play()
                         disparo.rect.x += 20
                         j.accion=2
                         j.con = 0
                     else:
                         if j.proyectil_tipo == 0:
                             disparo=Proyectil(j.pos(),-5,proyectil1_j2)
+                            j.sonido_proyectil.play()
                         else:
                             disparo=Proyectil(j.pos(),-5,proyectil_j2)
+                            j.sonido_proyectil.play()
+
                         disparo.rect.x -= 20
                         j.accion=3
                         j.con = 0
@@ -790,7 +864,6 @@ if __name__ == '__main__':
                 j.velx=0
                 nivel.fvelx = 0
                 nivel.fvely = 0
-
 
         # Si el jugador se aproxima a la derecha
         if j.rect.x > nivel.limderecha:
@@ -882,6 +955,7 @@ if __name__ == '__main__':
         for be in proyectil_enemigo:
             ls_pro=pygame.sprite.spritecollide(j,proyectil_enemigo,True)
             for be in ls_pro:
+                j.sonido_jugador.play()
                 j.vidas -= 1
 
         #proyectil en enemigo1
@@ -891,11 +965,14 @@ if __name__ == '__main__':
                 proyectil.remove(proyectil_jugador)
                 if j.proyectil_tipo == 0:
                     e_fantasma.vidas -= 1
+                    e_fantasma.sonido_enemigo1.play()
                 else:
                     e_fantasma.vidas = 0
                 if e_fantasma.vidas == 0:
                     e_fantasma.estado = False
                     enemigos1.remove(e_fantasma)
+                    j.cont_enemigos += 1
+                    #print(j.cont_enemigos)
         #proyectil en enemigo2
         for e_arana in enemigos2:
             ls_enemigo2 = pygame.sprite.spritecollide(e_arana,proyectil,True)
@@ -903,11 +980,14 @@ if __name__ == '__main__':
                 proyectil.remove(proyectil_jugador)
                 if j.proyectil_tipo == 0:
                     e_arana.vidas -= 1
+                    e_arana.sonido_damage.play()
                 else:
                     e_arana.vidas = 0
                 if e_arana.vidas == 0:
                     enemigos2.remove(e_arana)
-
+                    e_arana.sonido_damage2.play()
+                    j.cont_enemigos += 1
+                    #print(j.cont_enemigos)
         #proyectil en portal/s.pawner
         for e_portal in portales:
             ls_portales = pygame.sprite.spritecollide(e_portal,proyectil,True)
