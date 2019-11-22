@@ -1,6 +1,7 @@
 import pygame
 import random
 import configparser
+import sys
 from pygame.locals import *
 
 ANCHO = 1000
@@ -43,6 +44,41 @@ def Recortar_Mapa(imagen,a,b):
         y+=b
     return m
 
+def Menu(opcion):
+    fondoMenu = pygame.image.load('Images/Menu/FondoMenu.jpeg').convert()
+    fuente = pygame.font.Font('Fuentes/FuenteP.ttf',90)
+    titulo = fuente.render('THE WITCHER',True,BLANCO)
+    pantalla.blit(fondoMenu,[0,0])
+    pantalla.blit(titulo,[300,100])
+
+    if opcion == 1:
+        iniciarJuego, pos1 = TextoMenu("Iniciar Juego",[500,300],ROJO)
+        salir, pos2 = TextoMenu("Salir",[500,400],NEGRO)
+    elif opcion == 2:
+        iniciarJuego, pos1 = TextoMenu("Iniciar Juego",[500,300],NEGRO)
+        salir, pos2 = TextoMenu("Salir",[500,400],ROJO)
+    else:
+        iniciarJuego, pos1 = TextoMenu("Iniciar Juego",[500,300],NEGRO)
+        salir, pos2 = TextoMenu("Salir",[500,400],NEGRO)
+    pantalla.blit(iniciarJuego,pos1)
+    pantalla.blit(salir,pos2)
+
+def GameOver():
+    fondoMenu = pygame.image.load('Images/Menu/FondoMenu.jpeg').convert()
+    fuente = pygame.font.Font('Fuentes/FuenteP.ttf',90)
+    titulo = fuente.render('Game Over',True,BLANCO)
+    pantalla.blit(titulo,[300,100])
+    pygame.display.flip()
+
+
+def TextoMenu(texto,pos,color):
+    fuente = pygame.font.Font('Fuentes/FuenteP.ttf',60)
+    salida = pygame.font.Font.render(fuente, texto, True, color)
+    salida_rect = salida.get_rect()
+    salida_rect.centerx = pos[0]
+    salida_rect.centery = pos[1]
+    return salida, salida_rect
+
 class Jugador(pygame.sprite.Sprite):
     def __init__(self,m):
         pygame.sprite.Sprite.__init__(self)
@@ -70,7 +106,7 @@ class Jugador(pygame.sprite.Sprite):
         self.cont_enemigos = 0
 
         self.puntos_de_vida = pygame.image.load('vida.png')
-        self.vidas = 5
+        self.vidas = 3
 
         self.mejora = pygame.image.load('proyectil_j1.png')
         self.mejora_pocion = pygame.image.load('proyectil_j1.png')
@@ -138,6 +174,9 @@ class Jugador(pygame.sprite.Sprite):
 
         if self.vidas == 0:
             pygame.sprite.Sprite.kill(self)
+            GameOver()
+
+
 
         if self.obtener_mejora == True:
             #pantalla.blit(self.image,[10,42])
@@ -220,8 +259,8 @@ class Enemigo1(pygame.sprite.Sprite):
         self.rect.x = posX
         self.rect.y = posY
 
-        self.proyectil_e1 = pygame.image.load('projectil_e1.png')
-        self.proyectil_e2 = pygame.image.load('projectil_e2.png')
+        self.proyectil_e1 = pygame.image.load('Projectil_e1.png')
+        self.proyectil_e2 = pygame.image.load('Projectil_e2.png')
 
         self.izquierda = True
         self.cont = 0
@@ -792,7 +831,32 @@ if __name__ == '__main__':
 
     #portales.add(portal_magos)
     #portales.add(portal_aranas)
+    opcion = 1
 
+    fin = False
+    reloj=pygame.time.Clock()
+    while not fin:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                fin=True
+            if event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_UP:
+                    opcion -=1
+
+                if event.key == pygame.K_DOWN:
+                    opcion +=1
+
+                if event.key == pygame.K_RETURN:
+                    if opcion == 1:
+                        fin = True
+                    elif opcion == 2:
+                        sys.exit()
+
+        #nivel.update()
+        #nivel.escenario_desplazar()
+        Menu(opcion)
+        pygame.display.flip()
 
     nivel = Nivel(j)
     j.nivel = nivel
