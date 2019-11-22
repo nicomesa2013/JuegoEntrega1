@@ -66,10 +66,23 @@ def Menu(opcion):
 def GameOver():
     fondoMenu = pygame.image.load('Images/Menu/FondoMenu.jpeg').convert()
     fuente = pygame.font.Font('Fuentes/FuenteP.ttf',90)
-    titulo = fuente.render('Game Over',True,BLANCO)
+    titulo = fuente.render('Game Over',True,ROJO)
     pantalla.blit(titulo,[300,100])
     pygame.display.flip()
 
+def Congratulations():
+    fondoMenu = pygame.image.load('Images/Menu/FondoMenu.jpeg').convert()
+    fuente = pygame.font.Font('Fuentes/FuenteP.ttf',90)
+    titulo = fuente.render('Congratulations',True,ROJO)
+    pantalla.blit(titulo,[300,100])
+    pygame.display.flip()
+
+def Pausa():
+    fondoMenu = pygame.image.load('Images/Menu/FondoMenu.jpeg').convert()
+    fuente = pygame.font.Font('Fuentes/FuenteP.ttf',60)
+    titulo = fuente.render('Presione una tecla para continuar',True,ROJO)
+    pantalla.blit(titulo,[120,100])
+    pygame.display.flip()
 
 def TextoMenu(texto,pos,color):
     fuente = pygame.font.Font('Fuentes/FuenteP.ttf',60)
@@ -924,10 +937,30 @@ if __name__ == '__main__':
                         j.accion=3
                         j.con = 0
                     proyectil.add(disparo)
+
+                if event.key == pygame.K_p:
+                    '''Pause'''
+                    pausa = True
+                    while pausa:
+                        Pausa()
+                        for event in pygame.event.get():
+                            if event.type == pygame.KEYDOWN:
+                                pausa = False
+
+
             if event.type == pygame.KEYUP:
                 j.velx=0
                 nivel.fvelx = 0
                 nivel.fvely = 0
+
+        '''Vemos si le quedan vidas'''
+        if j.vidas == 0:
+            GameOver()
+            pygame.time.delay(1000)
+            fin = True
+
+        '''Fin de juego'''
+
 
         # Si el jugador se aproxima a la derecha
         if j.rect.x > nivel.limderecha:
