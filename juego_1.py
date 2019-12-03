@@ -118,6 +118,7 @@ class Jugador(pygame.sprite.Sprite):
 
         self.cont_enemigos = 0
 
+
         self.puntos_de_vida = pygame.image.load('vida.png')
         self.vidas = 3
 
@@ -948,6 +949,7 @@ if __name__ == '__main__':
                                 pausa = False
 
 
+
             if event.type == pygame.KEYUP:
                 j.velx=0
                 nivel.fvelx = 0
@@ -956,10 +958,15 @@ if __name__ == '__main__':
         '''Vemos si le quedan vidas'''
         if j.vidas == 0:
             GameOver()
-            pygame.time.delay(1000)
+            pygame.time.delay(1500)
             fin = True
 
         '''Fin de juego'''
+        if j.cont_enemigos == 11:
+            Congratulations()
+            pygame.time.delay(1500)
+            fin = True
+
 
 
         # Si el jugador se aproxima a la derecha
