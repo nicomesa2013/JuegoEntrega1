@@ -2,6 +2,7 @@ import pygame
 import random
 import configparser
 import sys
+import time
 from pygame.locals import *
 
 ANCHO = 1000
@@ -11,6 +12,13 @@ BLANCO=[255,255,255]
 NEGRO=[0,0,0]
 AZUL=[0,0,255]
 ROJO=[255,0,0]
+
+nivelador=0
+centSeg=0
+unidSeg=0
+deceSeg=0
+unidMin=0
+deceMin=0
 
 def Recortar(imagen,a,b,n):
     info = imagen.get_rect()
@@ -77,6 +85,7 @@ def Congratulations():
     pantalla.blit(titulo,[300,100])
     pygame.display.flip()
 
+
 def Pausa():
     fondoMenu = pygame.image.load('Images/Menu/FondoMenu.jpeg').convert()
     fuente = pygame.font.Font('Fuentes/FuenteP.ttf',60)
@@ -91,6 +100,38 @@ def TextoMenu(texto,pos,color):
     salida_rect.centerx = pos[0]
     salida_rect.centery = pos[1]
     return salida, salida_rect
+
+def TextoTiempo(texto,color):
+    fuente = pygame.font.Font('Fuentes/FuenteP.ttf',30)
+    tiempo = pygame.font.Font.render(fuente, texto, True, color)
+    pantalla.blit(tiempo,[880,10])
+
+def TiempoJuego():
+    global centSeg, unidSeg, deceSeg, unidMin, deceMin, nivelador, ReiniciarTiempo
+    nivelador+=1
+    if nivelador == 7:
+       nivelador=0
+       centSeg+=1
+    if centSeg==9:
+       centSeg=0
+       unidSeg+=1
+    if unidSeg==10:
+       unidSeg=0
+       deceSeg+=1
+    if deceSeg==6:
+       deceSeg=0
+       unidMin+=1
+    if unidMin==10:
+       unidMin=0
+       deceMin+=1
+    if deceMin==10:
+       deceMin=0
+
+def ConcatenacionTiempo(decMin ,uniMin ,decSeg ,uniSeg ,cenSeg):
+    timeText=''
+    timeText+=str(decMin)+str(uniMin)+":"+str(decSeg)+str(uniSeg)+":"+str(cenSeg)
+    return timeText
+
 
 class Jugador(pygame.sprite.Sprite):
     def __init__(self,m):
@@ -746,6 +787,8 @@ def nivel1():
     j.nivel = nivel
     nivel.cargarMapa(pantalla)
 
+    global centSeg, unidSeg, deceSeg, unidMin, deceMin, PausaTiempo
+
 
 
 
@@ -1098,8 +1141,15 @@ def nivel1():
 
         #nivel.update()
         #nivel.escenario_desplazar()
+        TiempoJuego()
+        cadena=ConcatenacionTiempo(deceMin,unidMin,deceSeg,unidSeg,centSeg)
+        TextoTiempo(cadena, BLANCO)
+
         pygame.display.flip()
         reloj.tick(30)
+
+def nivel2():
+    pass
 
 
 if __name__ == '__main__':
