@@ -694,6 +694,12 @@ class Nivel(object):
         self.desplazar_escenario = 0
         self.limitedel_nivel = -1000
 
+        self.mapa2 = configparser.ConfigParser()
+        self.mapa2.read('mapa2.mpt')
+        archivoMapa2 = self.mapa2.get('info','img')
+        imagenMapa2 = pygame.image.load(archivoMapa)
+        self.mM = Recortar_Mapa(imagenMapa2,32,32)
+
 
     '''def update(self):
         self.listade_bloques.update()
@@ -774,6 +780,57 @@ class Nivel(object):
                 c+=1
             f += 1
             c = 0
+
+    def cargarMapa2(self,pantalla):
+
+        mp = self.mapa2.get('info','mapa')
+        mp = mp.split('\n')#Fragmenta la matriz en filas
+        s = []
+        c = 0
+        f = 0
+        for e in mp:
+            for i in e:
+                d = self.mapa2.get(i,'tipo')
+
+                if d == 'vacio':
+                    #image de sistemas= pygame.Surface([32,32])
+                    #pantalla.blit(image, [c*32,f*32])
+                    pygame.display.flip()
+                if d == 'terreno1':
+                    fl = int(self.mapa2.get('!','fil'))
+                    cl = int(self.mapa2.get('!','col'))
+                    b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_bloques.add(b)
+                if d == 'terreno2':
+                    fl = int(self.mapa2.get('@','fil'))
+                    cl = int(self.mapa2.get('@','col'))
+                    b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_bloques.add(b)
+                if d == 'terreno3':
+                    fl = int(self.mapa2.get('#','fil'))
+                    cl = int(self.mapa2.get('#','col'))
+                    b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_bloques.add(b)
+                if d == 'terreno4':
+                    fl = int(self.mapa2.get('$','fil'))
+                    cl = int(self.mapa2.get('$','col'))
+                    b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_bloques.add(b)
+                '''if d == 'piso movil':
+                    fl = int(self.mapa2.get('m','fil'))
+                    cl = int(self.mapa2.get('m','col'))
+                    bm = Bloque_Movimiento([c*32,f*32],[32,32],self.mM[fl][cl])
+                    bm.limite_inferior = bm.rect.centery - 100
+                    bm.limite_superior = bm.rect.centery + 100
+                    #print 'limite_inferior:',bm.limite_inferior,'limite superior',bm.limite_superior
+                    #print 'bottom:',bm.rect.bottom,  'top',bm.rect.top
+                    bm.vely = 2
+                    bm.jugador = self.jugador
+                    self.listade_bloques.add(bm)'''
+                c+=1
+            f += 1
+            c = 0
+
 
 def nivel1():
     imagenProtagonista = pygame.image.load('personajev2.png')
@@ -1149,7 +1206,291 @@ def nivel1():
         reloj.tick(30)
 
 def nivel2():
-    pass
+    imagenProtagonista = pygame.image.load('personajev2.png')
+    #info = imagenProtagonista.get_rect()
+    mJ = Recortar(imagenProtagonista,32,56,3) #Matriz sprite Jugador
+    j=Jugador(mJ)
+    jugadores = pygame.sprite.Group()
+    jugadores.add(j)
+
+    nivel = Nivel(j)
+    j.nivel = nivel
+    nivel.cargarMapa2(pantalla)
+
+    global centSeg, unidSeg, deceSeg, unidMin, deceMin, PausaTiempo
+
+
+    proyectil_j1 = pygame.image.load('proyectil_j1.png')
+    proyectil_j2 = pygame.image.load('proyectil_j2.png')
+
+    proyectil1_j1 = pygame.image.load('proyectil2_j1.png')
+    proyectil1_j2 = pygame.image.load('proyectil2_j2.png')
+
+
+    item_mejora = Modificadores([325,275],proyectil_j2,1,j)
+    item_mejora.jugador = j
+    nivel.modificadores.add(item_mejora)
+
+
+    fin = False
+    reloj=pygame.time.Clock()
+    while not fin:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                fin=True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    j.velx=j.movimiento
+                    j.accion = 0
+                    j.derecha = True
+                if event.key == pygame.K_LEFT:
+                    j.velx=-j.movimiento
+                    j.accion = 1
+                    j.derecha = False
+                if event.key == pygame.K_UP:
+                    #j.velx=0
+                    j.Saltar()
+
+                '''if event.key == pygame.K_DOWN:
+                    j.velx=0
+                    j.vely=5'''
+                if event.key == pygame.K_x:
+                    #golpe
+                    j.accion=2
+                    j.con = 0
+                    if j.derecha == True:
+                        disparo=Proyectil(j.pos(),5,proyectil1_j1)
+                        disparo.rect.x += 20
+                        j.accion=2
+                        j.con = 0
+                    else:
+                        disparo=Proyectil(j.pos(),-5,proyectil1_j2)
+                        disparo.rect.x -= 20
+                        j.accion=3
+                        j.con = 0
+                    j.proyectil.add(disparo)
+                if event.key == pygame.K_c:
+                    #patada
+                    if j.derecha == True:
+                        if j.proyectil_tipo == 0:
+                            disparo=Proyectil(j.pos(),5,proyectil1_j1)
+                            j.sonido_proyectil.play()
+                        else:
+                            disparo=Proyectil(j.pos(),5,proyectil_j1)
+                            j.sonido_proyectil.play()
+                        disparo.rect.x += 20
+                        j.accion=2
+                        j.con = 0
+                    else:
+                        if j.proyectil_tipo == 0:
+                            disparo=Proyectil(j.pos(),-5,proyectil1_j2)
+                            j.sonido_proyectil.play()
+                        else:
+                            disparo=Proyectil(j.pos(),-5,proyectil_j2)
+                            j.sonido_proyectil.play()
+
+                        disparo.rect.x -= 20
+                        j.accion=3
+                        j.con = 0
+                    j.proyectil.add(disparo)
+
+                if event.key == pygame.K_p:
+                    '''Pause'''
+                    pausa = True
+                    while pausa:
+                        Pausa()
+                        for event in pygame.event.get():
+                            if event.type == pygame.KEYDOWN:
+                                pausa = False
+
+
+
+            if event.type == pygame.KEYUP:
+                j.velx=0
+                nivel.fvelx = 0
+                nivel.fvely = 0
+
+        '''Vemos si le quedan vidas'''
+        if j.vidas == 0:
+            GameOver()
+            pygame.time.delay(1500)
+            fin = True
+
+        '''Fin de juego'''
+        if j.cont_enemigos == 11:
+            Congratulations()
+            pygame.time.delay(1500)
+            fin = True
+
+
+
+        # Si el jugador se aproxima a la derecha
+        if j.rect.x > nivel.limderecha:
+            diff = j.rect.x - nivel.limderecha
+            j.rect.x = nivel.limderecha
+            nivel.enscenario_desplazar(-diff)
+            for enemigo_1 in nivel.enemigos1:
+                enemigo_1.rect.x += -diff
+            for enemigo_2 in nivel.enemigos2:
+                enemigo_2.rect.x += -diff
+            for proyectil1_j in j.proyectil:
+                proyectil1_j.rect.x += -diff
+            for enemigo in nivel.enemigos1:
+                for proyectil1_e in enemigo.proyectil_enemigo:
+                    proyectil1_e.rect.x += -diff
+            for port in nivel.portales:
+                port.rect.x += -diff
+            for mod in nivel.modificadores:
+                mod.rect.x += -diff
+        # Si el jugador se aproxima a la derecha
+        if j.rect.x < nivel.limizq:
+            diff = nivel.limizq - j.rect.x
+            j.rect.x = nivel.limizq
+            nivel.enscenario_desplazar(diff)
+            for enemigo_1 in nivel.enemigos1:
+                enemigo_1.rect.x += diff
+            for enemigo_2 in nivel.enemigos2:
+                enemigo_2.rect.x += diff
+            for proyectil1_j in j.proyectil:
+                proyectil1_j.rect.x += diff
+            for enemigo in nivel.enemigos1:
+                for proyectil1_e in enemigo.proyectil_enemigo:
+                    proyectil1_e.rect.x += diff
+            for port in nivel.portales:
+                port.rect.x += diff
+            for mod in nivel.modificadores:
+                mod.rect.x += diff
+
+        #sube
+        if j.rect.top > nivel.limabajo:
+            dif = j.rect.y - nivel.limabajo
+            j.rect.y = nivel.limabajo
+            nivel.enscenario_desplazar_y(-dif)
+            for enemigo_1 in nivel.enemigos1:
+                enemigo_1.rect.y += -dif
+            for enemigo_2 in nivel.enemigos2:
+                enemigo_2.rect.y += -dif
+            for proyectil1_j in j.proyectil:
+                proyectil1_j.rect.y += -dif
+            for enemigo in nivel.enemigos1:
+                for proyectil1_e in enemigo.proyectil_enemigo:
+                    proyectil1_e.rect.y += -dif
+            for port in nivel.portales:
+                port.rect.y += -dif
+            for mod in nivel.modificadores:
+                mod.rect.y += -dif
+
+		#baja
+        if j.rect.top < nivel.limarriba:
+            dif = nivel.limarriba - j.rect.y
+            j.rect.y = nivel.limarriba
+            nivel.enscenario_desplazar_y(dif)
+            for enemigo_1 in nivel.enemigos1:
+                enemigo_1.rect.y += dif
+            for enemigo_2 in nivel.enemigos2:
+                enemigo_2.rect.y += dif
+            for proyectil1_j in j.proyectil:
+                proyectil1_j.rect.y += dif
+            for enemigo in nivel.enemigos1:
+                for proyectil1_e in enemigo.proyectil_enemigo:
+                    proyectil1_e.rect.y += dif
+            for port in nivel.portales:
+                port.rect.y += dif
+            for mod in nivel.modificadores:
+                mod.rect.y += dif
+
+
+        #colision de proyectil con bloque
+        for b in nivel.listade_bloques:
+            ls=pygame.sprite.spritecollide(b,j.proyectil,True)
+            for b in ls:
+                #print ('colision')
+                j.proyectil.remove(b)
+        #colision de proyectil enemigo con bloque
+        for proyectil_colision in nivel.listade_bloques:
+            for enemigo in nivel.enemigos1:
+                ls=pygame.sprite.spritecollide(proyectil_colision,enemigo.proyectil_enemigo,True)
+                for proyectil_colision in ls:
+                    #print ('colision')
+                    j.proyectil.remove(proyectil_colision)
+
+
+        #proyectil enemigo1 en jugador
+        for enemigo in nivel.enemigos1:
+            ls_pro=pygame.sprite.spritecollide(j,enemigo.proyectil_enemigo,True)
+            for be in ls_pro:
+                j.sonido_jugador.play()
+                j.vidas -= 1
+
+        #proyectil en enemigo1
+        for e_fantasma in nivel.enemigos1:
+            ls_enemigo = pygame.sprite.spritecollide(e_fantasma,j.proyectil,True)
+            for proyectil_jugador in ls_enemigo:
+                j.proyectil.remove(proyectil_jugador)
+                if j.proyectil_tipo == 0:
+                    e_fantasma.vidas -= 1
+                    e_fantasma.sonido_enemigo1.play()
+                else:
+                    e_fantasma.vidas = 0
+                if e_fantasma.vidas == 0:
+                    e_fantasma.estado = False
+                    nivel.enemigos1.remove(e_fantasma)
+                    j.cont_enemigos += 1
+                    #print(j.cont_enemigos)
+        #proyectil en enemigo2
+        for e_arana in nivel.enemigos2:
+            ls_enemigo2 = pygame.sprite.spritecollide(e_arana,j.proyectil,True)
+            for proyectil_jugador in ls_enemigo2:
+                j.proyectil.remove(proyectil_jugador)
+                if j.proyectil_tipo == 0:
+                    e_arana.vidas -= 1
+                    e_arana.sonido_damage.play()
+                else:
+                    e_arana.vidas = 0
+                if e_arana.vidas == 0:
+                    nivel.enemigos2.remove(e_arana)
+                    e_arana.sonido_damage2.play()
+                    j.cont_enemigos += 1
+                    #print(j.cont_enemigos)
+        #proyectil en portal/s.pawner
+        for e_portal in nivel.portales:
+            ls_portales = pygame.sprite.spritecollide(e_portal,j.proyectil,True)
+            for proyectil_jugador in ls_portales:
+                proyectil.remove(proyectil_jugador)
+                e_portal.vidas -= 1
+                if e_portal.vidas == 0:
+                    e_portal.accion = 2
+                    e_portal.con = 0
+
+        #Zona de dibujado
+        nivel.draw(pantalla)
+        jugadores.draw(pantalla)
+        j.proyectil.draw(pantalla)
+        for enemigo in nivel.enemigos1:
+            enemigo.proyectil_enemigo.draw(pantalla)
+            enemigo.proyectil_enemigo.update()
+        nivel.enemigos1.draw(pantalla)
+        nivel.enemigos2.draw(pantalla)
+        nivel.portales.draw(pantalla)
+        nivel.modificadores.draw(pantalla)
+        #refresco de pantalla
+        jugadores.update()
+        j.proyectil.update()
+
+        nivel.enemigos1.update()
+        nivel.enemigos2.update()
+        nivel.portales.update()
+        nivel.modificadores.update()
+
+        #nivel.update()
+        #nivel.escenario_desplazar()
+        TiempoJuego()
+        cadena=ConcatenacionTiempo(deceMin,unidMin,deceSeg,unidSeg,centSeg)
+        TextoTiempo(cadena, BLANCO)
+
+        pygame.display.flip()
+        reloj.tick(30)
+
 
 
 if __name__ == '__main__':
