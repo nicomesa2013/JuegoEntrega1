@@ -1227,9 +1227,24 @@ def nivel2():
     proyectil1_j2 = pygame.image.load('proyectil2_j2.png')
 
 
-    item_mejora = Modificadores([325,275],proyectil_j2,1,j)
-    item_mejora.jugador = j
-    nivel.modificadores.add(item_mejora)
+    imagenenemigosubjefe1 = pygame.image.load('subjefe1.png')
+    recorte_enemigosubjefe1=Recortar(imagenenemigosubjefe1,128,128,0)
+    subjefe1 = Enemigo1(recorte_enemigosubjefe1,150,670)
+    subjefe1.jugador = j
+    nivel.enemigos1.add(subjefe1)
+
+    imagenenemigo4 = pygame.image.load('enemigo4.png')
+    recorte_enemigo4=Recortar(imagenenemigo4,64,64,0)
+    enemigo4A = Enemigo1(recorte_enemigo4,300,670)
+    enemigo4A.jugador = j
+    nivel.enemigos1.add(enemigo4A)
+
+    imagenenemigo3 = pygame.image.load('enemigo3.png')
+    recorte_enemigo3=Recortar(imagenenemigo3,48,32,0)
+    enemigo3A = Enemigo2(recorte_enemigo3,400,750)
+    enemigo3A.jugador = j
+    nivel.enemigos2.add(enemigo3A)
+
 
 
     fin = False
@@ -1523,7 +1538,7 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RETURN:
                     print (opcion)
                     if opcion == 0:
-                        nivel1()
+                        nivel2()
                     elif opcion == 1:
                         fin = True
 
