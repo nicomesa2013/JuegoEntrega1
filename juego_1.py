@@ -282,17 +282,44 @@ class Jugador(pygame.sprite.Sprite):
 
 
 class Proyectil(pygame.sprite.Sprite):
-    def __init__(self,pos,n,imagen_proyectil):
+    def __init__(self,pos,velx,imagen_proyectil):
         pygame.sprite.Sprite.__init__(self)
         self.image = imagen_proyectil
         self.rect=self.image.get_rect()
         self.rect.x=pos[0]
         self.rect.y=pos[1]+20
         self.con = self.rect.x
-        self.velx = n
+        self.velx = velx
 
     def update(self):
         self.rect.x+=self.velx
+
+class Proyectil_Per(Proyectil):
+    def __init__(self,pos,velx,imagen_proyectil,jugador):
+        super().__init__(pos,velx,imagen_proyectil)
+        self.vely = -1
+        self.abajo = True
+        self.jugador = jugador
+
+    def update(self):
+        super().update()
+        self.posjugador()
+        self.busquedaY()
+        self.rect.y += self.vely
+
+    def posjugador(self):
+        if self.rect.y < self.jugador.rect.y:
+            self.abajo = True
+        else:
+            self.abajo = False
+
+    def busquedaY(self):
+        if self.abajo:
+            self.vely = 1
+        else:
+            self.vely = -1
+
+
 
 class Enemigo1(pygame.sprite.Sprite):
     jugador = None
@@ -367,6 +394,39 @@ class Enemigo1(pygame.sprite.Sprite):
                     self.accion = 0
                 self.con = 0
             self.actualizacion= pygame.time.get_ticks()
+
+class Subjefe1(Enemigo1):
+    def __init__(self,m,posX, posY):
+        super().__init__(m,posX,posY)
+        print('Entro')
+        print(self.vidas)
+        self.vidas = 6
+        print(self.vidas)
+
+
+    def ataque(self):
+        #proyectil enemigo1
+        if self.actualizacion2 + 4000 < pygame.time.get_ticks() and self.estado == True:
+            e = self.pos()
+            if self.izquierda == True:
+                self.accion = 3
+                self.con = 0
+                disparo2=Proyectil_Per([e[0]+20,e[1]],5,self.proyectil_e1,self.jugador)
+                self.proyectil_enemigo.add(disparo2)
+            else:
+                self.accion = 1
+                self.con = 0
+                disparo2=Proyectil_Per([e[0]+20,e[1]],-5,self.proyectil_e2,self.jugador)
+                self.proyectil_enemigo.add(disparo2)
+            self.actualizacion2 = pygame.time.get_ticks()
+
+    def update(self):
+        super().posjugador()
+        self.ataque()
+        '''Seleccion de sprite'''
+        super().mov()
+
+
 
 class Enemigo2(pygame.sprite.Sprite):
     jugador = None
@@ -484,6 +544,7 @@ class Bloque(pygame.sprite.Sprite):
         self.rect.x += self.velx
         '''if self.velx > 0:
             self.velx -= 100'''
+
 
 class Spawner(pygame.sprite.Sprite):
     def __init__(self,m,posX,posY,tipo,jugador):
@@ -850,7 +911,11 @@ def nivel1():
 
 
     imagenenemigo1 = pygame.image.load('enemigo1.png')
+    imagenenemigosubjefe1 = pygame.image.load('subjefe1.png')
+
     recorte_enemigo1=Recortar(imagenenemigo1,64,64,0)
+    recorte_enemigosubjefe1=Recortar(imagenenemigosubjefe1,128,128,0)
+
     enemigo1A = Enemigo1(recorte_enemigo1,150,670)
     enemigo1A.jugador = j
     enemigo1B = Enemigo1(recorte_enemigo1,120,420)
@@ -865,6 +930,8 @@ def nivel1():
     enemigo1F.jugador = j
     enemigo1G = Enemigo1(recorte_enemigo1,2500,600)
     enemigo1G.jugador = j
+    subjefe1 = Subjefe1(recorte_enemigosubjefe1,2500,400)
+    subjefe1.jugador = j
     nivel.enemigos1.add(enemigo1A)
     nivel.enemigos1.add(enemigo1B)
     nivel.enemigos1.add(enemigo1C)
@@ -872,6 +939,7 @@ def nivel1():
     nivel.enemigos1.add(enemigo1E)
     nivel.enemigos1.add(enemigo1F)
     nivel.enemigos1.add(enemigo1G)
+    nivel.enemigos1.add(subjefe1)
 
 
     imagenenemigo2 = pygame.image.load('enemigo2.png')
@@ -1031,10 +1099,11 @@ def nivel1():
             fin = True
 
         '''Fin de juego'''
-        if j.cont_enemigos == 11:
-            Congratulations()
-            pygame.time.delay(1500)
-            fin = True
+        print (j.cont_enemigos,len(nivel.enemigos1))
+        if j.cont_enemigos >= 11 and len(nivel.enemigos1) == 0:
+            nivel2()
+            break
+
 
 
 
@@ -1125,7 +1194,6 @@ def nivel1():
             for enemigo in nivel.enemigos1:
                 ls=pygame.sprite.spritecollide(proyectil_colision,enemigo.proyectil_enemigo,True)
                 for proyectil_colision in ls:
-                    #print ('colision')
                     j.proyectil.remove(proyectil_colision)
 
 
@@ -1229,7 +1297,7 @@ def nivel2():
 
     imagenenemigosubjefe1 = pygame.image.load('subjefe1.png')
     recorte_enemigosubjefe1=Recortar(imagenenemigosubjefe1,128,128,0)
-    subjefe1 = Enemigo1(recorte_enemigosubjefe1,150,670)
+    subjefe1 = Subjefe1(recorte_enemigosubjefe1,150,670)
     subjefe1.jugador = j
     nivel.enemigos1.add(subjefe1)
 
@@ -1538,7 +1606,7 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RETURN:
                     print (opcion)
                     if opcion == 0:
-                        nivel2()
+                        nivel1()
                     elif opcion == 1:
                         fin = True
 
