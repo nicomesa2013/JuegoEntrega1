@@ -1239,6 +1239,24 @@ def nivel2():
     enemigo4A.jugador = j
     nivel.enemigos1.add(enemigo4A)
 
+    imagensubjefe2 = pygame.image.load('subjefe2.png')
+    recorte_subjefe2=Recortar(imagensubjefe2,128,128,0)
+    subjefe2 = Enemigo1(recorte_subjefe2,700,670)
+    subjefe2.jugador = j
+    nivel.enemigos1.add(subjefe2)
+
+    imagenjefefinal = pygame.image.load('jefefinal.png')
+    recorte_jefefinal=Recortar(imagenjefefinal,128,128,0)
+    jefefinal = Enemigo1(recorte_jefefinal,600,670)
+    jefefinal.jugador = j
+    nivel.enemigos1.add(jefefinal)
+
+    imagenenemigo4 = pygame.image.load('enemigo4.png')
+    recorte_enemigo4=Recortar(imagenenemigo4,64,64,0)
+    enemigo4A = Enemigo1(recorte_enemigo4,300,670)
+    enemigo4A.jugador = j
+    nivel.enemigos1.add(enemigo4A)
+
     imagenenemigo3 = pygame.image.load('enemigo3.png')
     recorte_enemigo3=Recortar(imagenenemigo3,48,32,0)
     enemigo3A = Enemigo2(recorte_enemigo3,400,750)
