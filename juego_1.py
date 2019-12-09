@@ -398,11 +398,7 @@ class Enemigo1(pygame.sprite.Sprite):
 class Subjefe1(Enemigo1):
     def __init__(self,m,posX, posY):
         super().__init__(m,posX,posY)
-        print('Entro')
-        print(self.vidas)
         self.vidas = 6
-        print(self.vidas)
-
 
     def ataque(self):
         #proyectil enemigo1
@@ -689,7 +685,6 @@ class Bloque_Movimiento(Bloque):
         super(Bloque_Movimiento,self).__init__(pto,size,imagen)
 
     def update(self):
-
         '''Mueve de izquierda/derecha'''
         self.rect.x += self.velx
 
@@ -714,14 +709,15 @@ class Bloque_Movimiento(Bloque):
                 self.jugador.rect.bottom = self.rect.top
             else:
                 self.jugador.rect.top = self.rect.bottom
+        print(self.rect)
+        print(self.rect.bottom,'<',self.limite_inferior,'or',self.rect.top,'>',self.limite_superior)
+        if self.rect.bottom > self.limite_inferior or self.rect.top < self.limite_superior:
 
-        if self.rect.bottom < self.limite_inferior or self.rect.top > self.limite_superior:
             self.vely *= -1
 
 class Nivel(object):
     def __init__(self, jugador):
         self.listade_bloques = pygame.sprite.Group()
-        self.listade_bloques_movi = pygame.sprite.Group()
         self.listade_enemigos = pygame.sprite.Group()
         self.enemigos1 = pygame.sprite.Group()
         self.enemigos2 = pygame.sprite.Group()
@@ -774,7 +770,7 @@ class Nivel(object):
 
         '''Cargar todas las listas de sprites que teniamos'''
         self.listade_bloques.draw(pantalla)
-        self.listade_bloques_movi.draw(pantalla)
+        # self.listade_bloques_movi.draw(pantalla)
         self.listade_enemigos.draw(pantalla)
 
     def enscenario_desplazar(self,desplazar_x):
@@ -827,6 +823,7 @@ class Nivel(object):
                     cl = int(self.mapa.get('$','col'))
                     b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
                     self.listade_bloques.add(b)
+
                 '''if d == 'piso movil':
                     fl = int(self.mapa.get('m','fil'))
                     cl = int(self.mapa.get('m','col'))
@@ -877,17 +874,19 @@ class Nivel(object):
                     cl = int(self.mapa2.get('$','col'))
                     b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
                     self.listade_bloques.add(b)
-                '''if d == 'piso movil':
+
+                if d == 'terreno5_movimiento':
                     fl = int(self.mapa2.get('m','fil'))
                     cl = int(self.mapa2.get('m','col'))
                     bm = Bloque_Movimiento([c*32,f*32],[32,32],self.mM[fl][cl])
-                    bm.limite_inferior = bm.rect.centery - 100
-                    bm.limite_superior = bm.rect.centery + 100
+                    bm.limite_inferior = bm.rect.centery + 100
+                    bm.limite_superior = bm.rect.centery - 100
                     #print 'limite_inferior:',bm.limite_inferior,'limite superior',bm.limite_superior
                     #print 'bottom:',bm.rect.bottom,  'top',bm.rect.top
                     bm.vely = 2
                     bm.jugador = self.jugador
-                    self.listade_bloques.add(bm)'''
+                    self.listade_bloques.add(bm)
+
                 c+=1
             f += 1
             c = 0
@@ -1295,21 +1294,54 @@ def nivel2():
 
     imagenenemigosubjefe1 = pygame.image.load('subjefe1.png')
     recorte_enemigosubjefe1=Recortar(imagenenemigosubjefe1,128,128,0)
-    subjefe1 = Subjefe1(recorte_enemigosubjefe1,150,670)
-    subjefe1.jugador = j
-    nivel.enemigos1.add(subjefe1)
 
+    # Flor
     imagenenemigo4 = pygame.image.load('enemigo4.png')
     recorte_enemigo4=Recortar(imagenenemigo4,64,64,0)
-    enemigo4A = Enemigo1(recorte_enemigo4,300,670)
+    enemigo4A = Enemigo1(recorte_enemigo4,160,672)
     enemigo4A.jugador = j
-    nivel.enemigos1.add(enemigo4A)
+    enemigo4B = Enemigo1(recorte_enemigo4,380,545)
+    enemigo4B.jugador = j
+    enemigo4C = Enemigo1(recorte_enemigo4,960,384)
+    enemigo4C.jugador = j
+    enemigo4D = Enemigo1(recorte_enemigo4,1856,384)
+    enemigo4D.jugador = j
+    enemigo4E = Enemigo1(recorte_enemigo4,1120,416)
+    enemigo4E.jugador = j
+    enemigo4F = Enemigo1(recorte_enemigo4,1780,416)
+    enemigo4F.jugador = j
+    enemigo4G = Enemigo1(recorte_enemigo4,1216,448)
+    enemigo4G.jugador = j
+    enemigo4H = Enemigo1(recorte_enemigo4,1684,448)
+    enemigo4H.jugador = j
+    enemigo4I = Enemigo1(recorte_enemigo4,1312,480)
+    enemigo4I.jugador = j
+    enemigo4J = Enemigo1(recorte_enemigo4,1588,480)
+    enemigo4J.jugador = j
 
+    nivel.enemigos1.add(enemigo4A)
+    nivel.enemigos1.add(enemigo4B)
+    nivel.enemigos1.add(enemigo4C)
+    nivel.enemigos1.add(enemigo4D)
+    nivel.enemigos1.add(enemigo4E)
+    nivel.enemigos1.add(enemigo4F)
+    nivel.enemigos1.add(enemigo4G)
+    nivel.enemigos1.add(enemigo4H)
+    nivel.enemigos1.add(enemigo4I)
+    nivel.enemigos1.add(enemigo4J)
+    # Perro
     imagenenemigo3 = pygame.image.load('enemigo3.png')
     recorte_enemigo3=Recortar(imagenenemigo3,48,32,0)
-    enemigo3A = Enemigo2(recorte_enemigo3,400,750)
+    enemigo3A = Enemigo2(recorte_enemigo3,400,800)
     enemigo3A.jugador = j
+    enemigo3B = Enemigo2(recorte_enemigo3,256,480)
+    enemigo3B.jugador = j
+    enemigo3C = Enemigo2(recorte_enemigo3,532,384)
+    enemigo3C.jugador = j
+
     nivel.enemigos2.add(enemigo3A)
+    nivel.enemigos2.add(enemigo3B)
+    nivel.enemigos2.add(enemigo3C)
 
 
 
@@ -1548,8 +1580,8 @@ def nivel2():
         jugadores.draw(pantalla)
         j.proyectil.draw(pantalla)
         for enemigo in nivel.enemigos1:
-            enemigo.proyectil_enemigo.draw(pantalla)
             enemigo.proyectil_enemigo.update()
+            enemigo.proyectil_enemigo.draw(pantalla)
         nivel.enemigos1.draw(pantalla)
         nivel.enemigos2.draw(pantalla)
         nivel.portales.draw(pantalla)
@@ -1558,6 +1590,7 @@ def nivel2():
         jugadores.update()
         j.proyectil.update()
 
+        nivel.listade_bloques.update()
         nivel.enemigos1.update()
         nivel.enemigos2.update()
         nivel.portales.update()
@@ -1604,7 +1637,7 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RETURN:
                     print (opcion)
                     if opcion == 0:
-                        nivel1()
+                        nivel2()
                     elif opcion == 1:
                         fin = True
 
