@@ -164,7 +164,7 @@ class Jugador(pygame.sprite.Sprite):
 
 
         self.puntos_de_vida = pygame.image.load('vida.png')
-        self.vidas = 3
+        self.vidas = 10
 
         self.mejora = pygame.image.load('proyectil_j1.png')
         self.mejora_pocion = pygame.image.load('proyectil_j1.png')
@@ -180,6 +180,7 @@ class Jugador(pygame.sprite.Sprite):
         self.nivel = None
 
         self.actualizacion_damage = pygame.time.get_ticks()
+        self.actualizacion_damage_obstaculo = pygame.time.get_ticks()
 
 
     def Gravedad(self):
@@ -194,11 +195,14 @@ class Jugador(pygame.sprite.Sprite):
             self.rect.y = ALTO - self.rect.height
 
     def Saltar(self):
+
         self.rect.y += 2
         lista_impactos_plataforma = pygame.sprite.spritecollide(self, self.nivel.listade_bloques, False)
+        lista_impactos_obs = pygame.sprite.spritecollide(self, self.nivel.listade_obstaculos, False)
         self.rect.y -= 2
-        if len(lista_impactos_plataforma) > 0 or self.rect.bottom >= ALTO:
+        if len(lista_impactos_plataforma) or len(lista_impactos_obs) > 0 or self.rect.bottom >= ALTO:
             self.vely = -self.csalto
+
     def update(self):
         self.rect.x += self.velx
         self.Gravedad()
@@ -222,6 +226,21 @@ class Jugador(pygame.sprite.Sprite):
                 self.rect.top = bloque.rect.bottom
             self.vely = 0
 
+        lista_impactos_bloque = pygame.sprite.spritecollide(self, self.nivel.listade_obstaculos,False)
+        for bloque in lista_impactos_bloque:
+            '''Si estamos desplazando en vertical'''
+            if bloque.tipo == 1:
+                self.rect.x = (200-(bloque.cont*32))
+                self.rect.y = 500
+            if bloque.tipo == 0 and (self.actualizacion_damage_obstaculo + 1250 < pygame.time.get_ticks()):
+                self.vidas -= 1
+                self.actualizacion_damage_obstaculo = pygame.time.get_ticks()
+            if self.vely > 0:
+                self.rect.bottom = bloque.rect.top
+            elif self.vely < 0:
+                self.rect.top = bloque.rect.bottom
+            self.vely = 0
+
         v = 0
         espacio_vidas = 10
         while v < self.vidas:
@@ -232,8 +251,6 @@ class Jugador(pygame.sprite.Sprite):
         if self.vidas == 0:
             pygame.sprite.Sprite.kill(self)
             GameOver()
-
-
 
         if self.obtener_mejora == True:
             #pantalla.blit(self.image,[10,42])
@@ -398,6 +415,7 @@ class Enemigo1(pygame.sprite.Sprite):
 class Subjefe1(Enemigo1):
     def __init__(self,m,posX, posY):
         super().__init__(m,posX,posY)
+        self.puntos_de_vida = pygame.image.load('vidasubjefe1.png')
         self.vidas = 6
 
     def ataque(self):
@@ -421,8 +439,46 @@ class Subjefe1(Enemigo1):
         self.ataque()
         '''Seleccion de sprite'''
         super().mov()
+        v = 0
+        espacio_vidas = 10
+        while v < self.vidas:
+            pantalla.blit(self.puntos_de_vida,[10+self.rect.x+espacio_vidas,self.rect.y-30])
+            espacio_vidas += 15
+            v += 1
 
+class Subjefe2(Enemigo1):
+    def __init__(self,m,posX, posY):
+        super().__init__(m,posX,posY)
+        self.puntos_de_vida = pygame.image.load('vidasubjefe2.png')
+        self.vidas = 6
 
+    def ataque(self):
+        #proyectil enemigo1
+        if self.actualizacion2 + 4000 < pygame.time.get_ticks() and self.estado == True:
+            e = self.pos()
+            if self.izquierda == True:
+                self.accion = 3
+                self.con = 0
+                disparo2=Proyectil_Per([e[0]+20,e[1]],5,self.proyectil_e1,self.jugador)
+                self.proyectil_enemigo.add(disparo2)
+            else:
+                self.accion = 1
+                self.con = 0
+                disparo2=Proyectil_Per([e[0]+20,e[1]],-5,self.proyectil_e2,self.jugador)
+                self.proyectil_enemigo.add(disparo2)
+            self.actualizacion2 = pygame.time.get_ticks()
+
+    def update(self):
+        super().posjugador()
+        self.ataque()
+        '''Seleccion de sprite'''
+        super().mov()
+        v = 0
+        espacio_vidas = 10
+        while v < self.vidas:
+            pantalla.blit(self.puntos_de_vida,[10+self.rect.x+espacio_vidas,self.rect.y-5])
+            espacio_vidas += 15
+            v += 1
 
 class Enemigo2(pygame.sprite.Sprite):
     jugador = None
@@ -541,12 +597,34 @@ class Bloque(pygame.sprite.Sprite):
         '''if self.velx > 0:
             self.velx -= 100'''
 
+class Obstaculo(pygame.sprite.Sprite):
+    def __init__(self,pto,size,imagen):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = imagen
+        self.rect=self.image.get_rect()
+        self.rect.x=pto[0]
+        self.rect.y=pto[1]
+        self.velx = 0
+        self.vely = 0
+        self.tipo = 0
+        self.cont = 0
+
+    def EnRango(self,posj,val):
+        liminf = self.rect.bottom - val
+        limsup = self.rect.bottom + val
+        dentro = False
+        if (liminf < posj) and (posj < limsup):
+            dentro = True
+        return dentro
+
+    def update(self):
+        self.rect.x += self.velx
 
 class Spawner(pygame.sprite.Sprite):
-    def __init__(self,m,posX,posY,tipo,jugador):
+    def __init__(self,m,posX,posY,tipo,jugador,nivel):
         pygame.sprite.Sprite.__init__(self)
         self.m=m
-        self.accion = 2
+        self.accion = 0
         self.con=0
         self.lim = [7,7,5]
         self.image = self.m[self.con][self.accion]
@@ -566,6 +644,7 @@ class Spawner(pygame.sprite.Sprite):
         self.recorte_enemigo1=Recortar(imagenenemigo1,64,64,0)
 
         self.jugador = jugador
+        self.nivel = nivel
 
         self.tipo = tipo
         self.cont = 0
@@ -590,6 +669,11 @@ class Spawner(pygame.sprite.Sprite):
             self.kill()
 
     def update(self):
+        if pygame.sprite.collide_rect(self, self.jugador):
+            self.nivel.fin = True
+            nivel2(self.jugador)
+
+
         if self.vidas == 0:
             self.rem()
         else:
@@ -658,6 +742,15 @@ class Modificadores(pygame.sprite.Sprite):
             self.jugador.mejora_pocion = self.image
             self.jugador.obtener_pocion = True
 
+    def pocion_speed2(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            self.jugador.sonido_pocion.play()
+            self.kill()
+            self.jugador.movimiento = 6
+            self.jugador.csalto = 10
+            self.jugador.mejora_pocion = self.image
+            self.jugador.obtener_pocion = True
 
     def update(self):
         if self.tipo == 1:
@@ -672,6 +765,8 @@ class Modificadores(pygame.sprite.Sprite):
             self.pocion_speed()
         if self.tipo == 6:
             self.pocion_snormal()
+        if self.tipo == 7:
+            self.pocion_speed2()
 
 
 class Bloque_Movimiento(Bloque):
@@ -718,6 +813,7 @@ class Bloque_Movimiento(Bloque):
 class Nivel(object):
     def __init__(self, jugador):
         self.listade_bloques = pygame.sprite.Group()
+        self.listade_obstaculos = pygame.sprite.Group()
         self.listade_enemigos = pygame.sprite.Group()
         self.enemigos1 = pygame.sprite.Group()
         self.enemigos2 = pygame.sprite.Group()
@@ -741,6 +837,8 @@ class Nivel(object):
         self.info = self.imagende_fondo.get_rect()
         self.anf = self.info[2]
         self.alf = self.info[3]
+
+        self.fin = False
 
         self.mapa = configparser.ConfigParser()
         self.mapa.read('mapa_prueba.mpt')
@@ -770,6 +868,7 @@ class Nivel(object):
 
         '''Cargar todas las listas de sprites que teniamos'''
         self.listade_bloques.draw(pantalla)
+        self.listade_obstaculos.draw(pantalla)
         # self.listade_bloques_movi.draw(pantalla)
         self.listade_enemigos.draw(pantalla)
 
@@ -779,12 +878,16 @@ class Nivel(object):
         #Movemos todas las listas de sprites
         for plataforma in self.listade_bloques:
             plataforma.rect.x += desplazar_x
+        for plataforma in self.listade_obstaculos:
+            plataforma.rect.x += desplazar_x
 
     def enscenario_desplazar_y(self,desplazar_y):
         self.fy += desplazar_y
 
         #Movemos todas las listas de sprites
         for plataforma in self.listade_bloques:
+            plataforma.rect.y += desplazar_y
+        for plataforma in self.listade_obstaculos:
             plataforma.rect.y += desplazar_y
 
 
@@ -823,6 +926,17 @@ class Nivel(object):
                     cl = int(self.mapa.get('$','col'))
                     b = Bloque([c*32,f*32],[32,32],self.mM[fl][cl])
                     self.listade_bloques.add(b)
+                if d == 'lava':
+                    fl = int(self.mapa.get('l','fil'))
+                    cl = int(self.mapa.get('l','col'))
+                    b = Obstaculo([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_obstaculos.add(b)
+                if d == 'pincho':
+                    fl = int(self.mapa.get('p','fil'))
+                    cl = int(self.mapa.get('p','col'))
+                    b = Obstaculo([c*32,f*32],[32,32],self.mM[fl][cl])
+                    b.tipo = 1
+                    self.listade_obstaculos.add(b)
 
                 '''if d == 'piso movil':
                     fl = int(self.mapa.get('m','fil'))
@@ -846,6 +960,7 @@ class Nivel(object):
         s = []
         c = 0
         f = 0
+        cont = 0
         for e in mp:
             for i in e:
                 d = self.mapa2.get(i,'tipo')
@@ -886,17 +1001,26 @@ class Nivel(object):
                     bm.vely = 2
                     bm.jugador = self.jugador
                     self.listade_bloques.add(bm)
+                if d == 'lava':
+                    fl = int(self.mapa.get('l','fil'))
+                    cl = int(self.mapa.get('l','col'))
+                    b = Obstaculo([c*32,f*32],[32,32],self.mM[fl][cl])
+                    self.listade_obstaculos.add(b)
+                if d == 'pincho':
+                    fl = int(self.mapa.get('p','fil'))
+                    cl = int(self.mapa.get('p','col'))
+                    b = Obstaculo([c*32,f*32],[32,32],self.mM[fl][cl])
+                    b.tipo = 1
+                    cont += 1
+                    b.cont = cont
+                    self.listade_obstaculos.add(b)
 
                 c+=1
             f += 1
             c = 0
 
 
-def nivel1():
-    imagenProtagonista = pygame.image.load('personajev2.png')
-    #info = imagenProtagonista.get_rect()
-    mJ = Recortar(imagenProtagonista,32,56,3) #Matriz sprite Jugador
-    j=Jugador(mJ)
+def nivel1(j):
     jugadores = pygame.sprite.Group()
     jugadores.add(j)
 
@@ -905,9 +1029,6 @@ def nivel1():
     nivel.cargarMapa(pantalla)
 
     global centSeg, unidSeg, deceSeg, unidMin, deceMin, PausaTiempo
-
-
-
 
     imagenenemigo1 = pygame.image.load('enemigo1.png')
     imagenenemigosubjefe1 = pygame.image.load('subjefe1.png')
@@ -935,8 +1056,8 @@ def nivel1():
     nivel.enemigos1.add(enemigo1B)
     nivel.enemigos1.add(enemigo1C)
     nivel.enemigos1.add(enemigo1D)
-    nivel.enemigos1.add(enemigo1E)
-    nivel.enemigos1.add(enemigo1F)
+    #nivel.enemigos1.add(enemigo1E)
+    #nivel.enemigos1.add(enemigo1F)
     nivel.enemigos1.add(enemigo1G)
     nivel.enemigos1.add(subjefe1)
 
@@ -1007,18 +1128,20 @@ def nivel1():
 
     portal_mago = pygame.image.load('portal_mago.png')
     recorte_portal_mago=Recortar(portal_mago,32,64,0)
-    portal_magos = Spawner(recorte_portal_mago,1800,500,0,j)
+    #portal_magos = Spawner(recorte_portal_mago,1800,500,0,j)
 
     portal_arana = pygame.image.load('portal_arana.png')
     recorte_arana=Recortar(portal_arana,32,64,0)
-    portal_aranas = Spawner(recorte_arana,2200,500,1,j)
+    portal_1 = Spawner(recorte_arana,1820,480,1,j,nivel)
+    #portal_1 = Spawner(recorte_arana,300,850,1,j,nivel)
+    nivel.portales.add(portal_1)
 
-    fin = False
+    #fin = False
     reloj=pygame.time.Clock()
-    while not fin:
+    while not nivel.fin:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                fin=True
+                nivel.fin=True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     j.velx=j.movimiento
@@ -1095,11 +1218,12 @@ def nivel1():
         if j.vidas == 0:
             GameOver()
             pygame.time.delay(1500)
-            fin = True
+            nivel.fin = True
 
         '''Fin de juego'''
         if j.cont_enemigos >= 11 and len(nivel.enemigos1) == 0:
-            nivel2()
+            nivel.fin = True
+            nivel2(j)
 
 
 
@@ -1235,7 +1359,7 @@ def nivel1():
         for e_portal in nivel.portales:
             ls_portales = pygame.sprite.spritecollide(e_portal,j.proyectil,True)
             for proyectil_jugador in ls_portales:
-                proyectil.remove(proyectil_jugador)
+                j.proyectil.remove(proyectil_jugador)
                 e_portal.vidas -= 1
                 if e_portal.vidas == 0:
                     e_portal.accion = 2
@@ -1270,11 +1394,13 @@ def nivel1():
         pygame.display.flip()
         reloj.tick(30)
 
-def nivel2():
-    imagenProtagonista = pygame.image.load('personajev2.png')
+def nivel2(j):
+    '''imagenProtagonista = pygame.image.load('personajev2.png')
     #info = imagenProtagonista.get_rect()
     mJ = Recortar(imagenProtagonista,32,56,3) #Matriz sprite Jugador
-    j=Jugador(mJ)
+    j=Jugador(mJ)'''
+    j.rect.x = 200
+    j.rect.y = 875
     jugadores = pygame.sprite.Group()
     jugadores.add(j)
 
@@ -1295,16 +1421,21 @@ def nivel2():
     imagenenemigosubjefe1 = pygame.image.load('subjefe1.png')
     recorte_enemigosubjefe1=Recortar(imagenenemigosubjefe1,128,128,0)
 
+    imagen_pocion_speed = pygame.image.load('pocion_speed.png')
+    item_pocion_speed = Modificadores([100,704],imagen_pocion_speed,7,j)
+    item_pocion_speed.jugador = j
+    nivel.modificadores.add(item_pocion_speed)
+
     # Flor
     imagenenemigo4 = pygame.image.load('enemigo4.png')
     recorte_enemigo4=Recortar(imagenenemigo4,64,64,0)
-    enemigo4A = Enemigo1(recorte_enemigo4,160,672)
+    enemigo4A = Enemigo1(recorte_enemigo4,130,672)
     enemigo4A.jugador = j
-    enemigo4B = Enemigo1(recorte_enemigo4,380,545)
+    enemigo4B = Enemigo1(recorte_enemigo4,300,545)
     enemigo4B.jugador = j
-    enemigo4C = Enemigo1(recorte_enemigo4,960,384)
+    enemigo4C = Enemigo1(recorte_enemigo4,910,418)
     enemigo4C.jugador = j
-    enemigo4D = Enemigo1(recorte_enemigo4,1856,384)
+    enemigo4D = Enemigo1(recorte_enemigo4,1420,481)
     enemigo4D.jugador = j
     enemigo4E = Enemigo1(recorte_enemigo4,1120,416)
     enemigo4E.jugador = j
@@ -1319,38 +1450,53 @@ def nivel2():
     enemigo4J = Enemigo1(recorte_enemigo4,1588,480)
     enemigo4J.jugador = j
 
-    nivel.enemigos1.add(enemigo4A)
-    nivel.enemigos1.add(enemigo4B)
+    #nivel.enemigos1.add(enemigo4A)
+    #nivel.enemigos1.add(enemigo4B)
     nivel.enemigos1.add(enemigo4C)
     nivel.enemigos1.add(enemigo4D)
-    nivel.enemigos1.add(enemigo4E)
-    nivel.enemigos1.add(enemigo4F)
-    nivel.enemigos1.add(enemigo4G)
-    nivel.enemigos1.add(enemigo4H)
-    nivel.enemigos1.add(enemigo4I)
-    nivel.enemigos1.add(enemigo4J)
+    #nivel.enemigos1.add(enemigo4E)
+    #nivel.enemigos1.add(enemigo4F)
+    #nivel.enemigos1.add(enemigo4G)
+    #nivel.enemigos1.add(enemigo4H)
+    #nivel.enemigos1.add(enemigo4I)
+    #nivel.enemigos1.add(enemigo4J)
     # Perro
     imagenenemigo3 = pygame.image.load('enemigo3.png')
     recorte_enemigo3=Recortar(imagenenemigo3,48,32,0)
-    enemigo3A = Enemigo2(recorte_enemigo3,400,800)
+    enemigo3A = Enemigo2(recorte_enemigo3,340,800)
     enemigo3A.jugador = j
-    enemigo3B = Enemigo2(recorte_enemigo3,256,480)
+    enemigo3B = Enemigo2(recorte_enemigo3,200,480)
     enemigo3B.jugador = j
     enemigo3C = Enemigo2(recorte_enemigo3,532,384)
     enemigo3C.jugador = j
 
-    nivel.enemigos2.add(enemigo3A)
-    nivel.enemigos2.add(enemigo3B)
-    nivel.enemigos2.add(enemigo3C)
+    #nivel.enemigos2.add(enemigo3A)
+    #nivel.enemigos2.add(enemigo3B)
+    #nivel.enemigos2.add(enemigo3C)
 
 
+    imagenenemigosubjefe2 = pygame.image.load('subjefe2.png')
+    recorte_enemigosubjefe2=Recortar(imagenenemigosubjefe2,128,128,0)
+    subjefe2 = Subjefe2(recorte_enemigosubjefe2,2650,225)
+    subjefe2.jugador = j
+    nivel.enemigos1.add(subjefe2)
 
-    fin = False
+    portal_mago = pygame.image.load('portal_mago.png')
+    recorte_portal_mago=Recortar(portal_mago,32,64,0)
+    portal_2 = Spawner(recorte_portal_mago,2820,280,0,j,nivel)
+    nivel.portales.add(portal_2)
+
+    vida_imagen = pygame.image.load('vida.png')
+    item_vida = Modificadores([1600,410],vida_imagen,2,j)
+    item_vida.jugador = j
+    nivel.modificadores.add(item_vida)
+
+    #fin = False
     reloj=pygame.time.Clock()
-    while not fin:
+    while not nivel.fin:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                fin=True
+                nivel.fin=True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     j.velx=j.movimiento
@@ -1427,14 +1573,13 @@ def nivel2():
         if j.vidas == 0:
             GameOver()
             pygame.time.delay(1500)
-            fin = True
+            nivel.fin = True
 
         '''Fin de juego'''
         if j.cont_enemigos == 11:
             Congratulations()
             pygame.time.delay(1500)
-            fin = True
-
+            nivel.fin = True
 
 
         # Si el jugador se aproxima a la derecha
@@ -1550,6 +1695,7 @@ def nivel2():
                     nivel.enemigos1.remove(e_fantasma)
                     j.cont_enemigos += 1
                     #print(j.cont_enemigos)
+
         #proyectil en enemigo2
         for e_arana in nivel.enemigos2:
             ls_enemigo2 = pygame.sprite.spritecollide(e_arana,j.proyectil,True)
@@ -1569,7 +1715,7 @@ def nivel2():
         for e_portal in nivel.portales:
             ls_portales = pygame.sprite.spritecollide(e_portal,j.proyectil,True)
             for proyectil_jugador in ls_portales:
-                proyectil.remove(proyectil_jugador)
+                j.proyectil.remove(proyectil_jugador)
                 e_portal.vidas -= 1
                 if e_portal.vidas == 0:
                     e_portal.accion = 2
@@ -1616,6 +1762,11 @@ if __name__ == '__main__':
     musica_juego.set_volume(0.9)
     musica_juego.play()
 
+    imagenProtagonista = pygame.image.load('personajev2.png')
+    #info = imagenProtagonista.get_rect()
+    mJ = Recortar(imagenProtagonista,32,56,3) #Matriz sprite Jugador
+    j=Jugador(mJ)
+
     #portales.add(portal_magos)
     #portales.add(portal_aranas)
     opcion = 0
@@ -1637,7 +1788,7 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RETURN:
                     print (opcion)
                     if opcion == 0:
-                        nivel2()
+                        nivel1(j)
                     elif opcion == 1:
                         fin = True
 
