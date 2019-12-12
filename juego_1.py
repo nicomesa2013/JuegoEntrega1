@@ -199,8 +199,10 @@ class Jugador(pygame.sprite.Sprite):
         self.rect.y += 2
         lista_impactos_plataforma = pygame.sprite.spritecollide(self, self.nivel.listade_bloques, False)
         lista_impactos_obs = pygame.sprite.spritecollide(self, self.nivel.listade_obstaculos, False)
+        lista_impactos_enemigo1 = pygame.sprite.spritecollide(self, self.nivel.enemigos1, False)
+        lista_impactos_enemigo2 = pygame.sprite.spritecollide(self, self.nivel.enemigos2, False)
         self.rect.y -= 2
-        if len(lista_impactos_plataforma) or len(lista_impactos_obs) > 0 or self.rect.bottom >= ALTO:
+        if len(lista_impactos_plataforma) or len(lista_impactos_obs) or len(lista_impactos_enemigo1) or len(lista_impactos_enemigo2)> 0 or self.rect.bottom >= ALTO:
             self.vely = -self.csalto
 
     def update(self):
@@ -383,11 +385,45 @@ class Enemigo1(pygame.sprite.Sprite):
         else:
             self.izquierda = False
 
+    def col_iz(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left > self.jugador.rect.right:
+                self.jugador.rect.right = self.rect.left
+                self.jugador.col_enemigo()
+
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left < self.jugador.rect.x:
+                self.jugador.rect.left = self.rect.right
+                self.jugador.col_enemigo()
+
+    def col_der(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left < self.jugador.rect.right:
+                self.jugador.rect.right = self.rect.left
+
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left > self.jugador.rect.x:
+                self.jugador.rect.left = self.rect.right
+
+    def col_top(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.jugador.rect.bottom > self.rect.top:
+                self.jugador.rect.bottom = self.rect.top
+
     def update(self):
         self.posjugador()
         self.ataque()
         '''Seleccion de sprite'''
         self.mov()
+
+        self.col_top()
+        self.col_iz()
+        self.col_der()
 
     def pos(self):
         p=[self.rect.x,self.rect.y]
@@ -453,7 +489,40 @@ class Subjefe1(Enemigo1):
                 self.proyectil_enemigo.add(disparo2)
             self.actualizacion2 = pygame.time.get_ticks()
 
+    def col_iz(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left > self.jugador.rect.right:
+                self.jugador.rect.right = self.rect.left
+                self.jugador.col_enemigo()
+
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left < self.jugador.rect.x:
+                self.jugador.rect.left = self.rect.right
+                self.jugador.col_enemigo()
+
+    def col_der(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left < self.jugador.rect.right:
+                self.jugador.rect.right = self.rect.left
+
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left > self.jugador.rect.x:
+                self.jugador.rect.left = self.rect.right
+
+    def col_top(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.jugador.rect.bottom > self.rect.top:
+                self.jugador.rect.bottom = self.rect.top
+
     def update(self):
+        self.col_top()
+        self.col_iz()
+        self.col_der()
         super().posjugador()
         self.ataque()
         '''Seleccion de sprite'''
@@ -490,7 +559,40 @@ class Subjefe2(Enemigo1):
                 self.proyectil_enemigo.add(disparo2)
             self.actualizacion2 = pygame.time.get_ticks()
 
+    def col_iz(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left > self.jugador.rect.right:
+                self.jugador.rect.right = self.rect.left
+                self.jugador.col_enemigo()
+
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left < self.jugador.rect.x:
+                self.jugador.rect.left = self.rect.right
+                self.jugador.col_enemigo()
+
+    def col_der(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left < self.jugador.rect.right:
+                self.jugador.rect.right = self.rect.left
+
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left > self.jugador.rect.x:
+                self.jugador.rect.left = self.rect.right
+
+    def col_top(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.jugador.rect.bottom > self.rect.top:
+                self.jugador.rect.bottom = self.rect.top
+
     def update(self):
+        self.col_top()
+        self.col_iz()
+        self.col_der()
         super().posjugador()
         self.ataque()
         '''Seleccion de sprite'''
@@ -528,7 +630,40 @@ class Jefefinal(Enemigo1):
                 self.proyectil_enemigo.add(disparo2)
             self.actualizacion2 = pygame.time.get_ticks()
 
+    def col_iz(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left > self.jugador.rect.right:
+                self.jugador.rect.right = self.rect.left
+                self.jugador.col_enemigo()
+
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left < self.jugador.rect.x:
+                self.jugador.rect.left = self.rect.right
+                self.jugador.col_enemigo()
+
+    def col_der(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left < self.jugador.rect.right:
+                self.jugador.rect.right = self.rect.left
+
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.rect.left > self.jugador.rect.x:
+                self.jugador.rect.left = self.rect.right
+
+    def col_top(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            if self.jugador.rect.bottom > self.rect.top:
+                self.jugador.rect.bottom = self.rect.top
+
     def update(self):
+        self.col_top()
+        self.col_iz()
+        self.col_der()
         super().posjugador()
         self.ataque()
         '''Seleccion de sprite'''
@@ -544,6 +679,7 @@ class Jefefinal(Enemigo1):
                 pantalla.blit(self.puntos_de_vida,[10+self.rect.x+espacio_vidas2,self.rect.y-30])
                 espacio_vidas2 += 15
             v += 1
+
 
 class Enemigo2(pygame.sprite.Sprite):
     jugador = None
@@ -562,6 +698,8 @@ class Enemigo2(pygame.sprite.Sprite):
 
         self.sonido_damage=pygame.mixer.Sound('audio/spider.ogg')
         self.sonido_damage2=pygame.mixer.Sound('audio/spider2.ogg')
+        self.sonido_damage3=pygame.mixer.Sound('audio/Wolf_d.ogg')
+        self.sonido_damage4=pygame.mixer.Sound('audio/Wolf_death.ogg')
 
         self.rect=self.image.get_rect()
         self.rect.x = posX
@@ -1648,6 +1786,11 @@ def nivel2(j):
     item_vida.jugador = j
     nivel.modificadores.add(item_vida)
 
+    imagen_pocion_damage = pygame.image.load('pocion_damage.png')
+    item_pocion_damage = Modificadores([650,388],imagen_pocion_damage,3,j,nivel)
+    item_pocion_damage.jugador = j
+    nivel.modificadores.add(item_pocion_damage)
+
     #fin = False
     reloj=pygame.time.Clock()
     while not nivel.fin:
@@ -1864,12 +2007,12 @@ def nivel2(j):
                 j.proyectil.remove(proyectil_jugador)
                 if j.proyectil_tipo == 0:
                     e_arana.vidas -= 1
-                    e_arana.sonido_damage.play()
+                    e_arana.sonido_damage3.play()
                 else:
                     e_arana.vidas -= 2
                 if e_arana.vidas <= 0:
                     nivel.enemigos2.remove(e_arana)
-                    e_arana.sonido_damage2.play()
+                    e_arana.sonido_damage4.play()
                     j.cont_enemigos += 1
                     #print(j.cont_enemigos)
         #proyectil en portal/s.pawner
@@ -2212,7 +2355,7 @@ if __name__ == '__main__':
     pantalla = pygame.display.set_mode([ANCHO,ALTO])
 
     musica_juego=pygame.mixer.Sound('audio/musica_juego.ogg')
-    musica_juego.set_volume(0.9)
+    musica_juego.set_volume(0.5)
     musica_juego.play()
 
     imagenProtagonista = pygame.image.load('personajev2.png')
@@ -2240,7 +2383,7 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RETURN:
                     print (opcion)
                     if opcion == 0:
-                        nivel1(j)
+                        nivel2(j)
                     elif opcion == 1:
                         fin = True
 
