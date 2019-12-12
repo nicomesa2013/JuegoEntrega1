@@ -164,7 +164,7 @@ class Jugador(pygame.sprite.Sprite):
 
 
         self.puntos_de_vida = pygame.image.load('vida.png')
-        self.vidas = 10
+        self.vidas = 3
 
         self.mejora = pygame.image.load('proyectil_j1.png')
         self.mejora_pocion = pygame.image.load('proyectil_j1.png')
@@ -613,22 +613,45 @@ class Jefefinal(Enemigo1):
         self.proyectil_e1 = pygame.image.load('Projectil_e1v5.png')
         self.proyectil_e2 = pygame.image.load('Projectil_e2v5.png')
         self.tipo = 1
+        self.actualizacion3 = pygame.time.get_ticks()
 
     def ataque(self):
         #proyectil enemigo1
-        if self.actualizacion2 + 4000 < pygame.time.get_ticks() and self.estado == True:
+        if self.actualizacion2 + 3000 < pygame.time.get_ticks() and self.estado == True:
             e = self.pos()
             if self.izquierda == True:
                 self.accion = 3
                 self.con = 0
-                disparo2=Proyectil_Per([e[0]+20,e[1]],5,self.proyectil_e1,self.jugador)
+                disparo2=Proyectil_Per([e[0]+30,e[1]+50],5,self.proyectil_e1,self.jugador)
                 self.proyectil_enemigo.add(disparo2)
             else:
                 self.accion = 1
                 self.con = 0
-                disparo2=Proyectil_Per([e[0]+20,e[1]],-5,self.proyectil_e2,self.jugador)
+                disparo2=Proyectil_Per([e[0]-30,e[1]+50],-5,self.proyectil_e2,self.jugador)
                 self.proyectil_enemigo.add(disparo2)
             self.actualizacion2 = pygame.time.get_ticks()
+
+        if self.actualizacion3 + 6000 < pygame.time.get_ticks() and self.estado == True:
+            e = self.pos()
+            if self.izquierda == True:
+                self.accion = 3
+                self.con = 0
+                disparo2=Proyectil_Per([e[0]+30,e[1]+50],5,self.proyectil_e1,self.jugador)
+                disparo3=Proyectil_Per([e[0]+30,e[1]+30],5,self.proyectil_e1,self.jugador)
+                disparo4=Proyectil_Per([e[0]+30,e[1]+75],5,self.proyectil_e1,self.jugador)
+                self.proyectil_enemigo.add(disparo2)
+                self.proyectil_enemigo.add(disparo3)
+                self.proyectil_enemigo.add(disparo4)
+            else:
+                self.accion = 1
+                self.con = 0
+                disparo2=Proyectil_Per([e[0]-30,e[1]+50],-5,self.proyectil_e2,self.jugador)
+                disparo3=Proyectil_Per([e[0]-30,e[1]+30],-5,self.proyectil_e2,self.jugador)
+                disparo4=Proyectil_Per([e[0]-30,e[1]+75],-5,self.proyectil_e2,self.jugador)
+                self.proyectil_enemigo.add(disparo2)
+                self.proyectil_enemigo.add(disparo3)
+                self.proyectil_enemigo.add(disparo4)
+            self.actualizacion3 = pygame.time.get_ticks()
 
     def col_iz(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
@@ -905,6 +928,7 @@ class Modificadores(pygame.sprite.Sprite):
             self.kill()
             self.jugador.obtener_mejora = True
             self.jugador.proyectil_tipo = 1
+
 
     def mejora_vida(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
@@ -1426,6 +1450,16 @@ def nivel1(j):
     #portal_1 = Spawner(recorte_arana,300,850,1,j,nivel)
     nivel.portales.add(portal_1)
 
+    pq = False
+    pw = False
+    pe = False
+    pr = False
+    pt = False
+    nc = False
+    n2 = False
+    n3 = False
+
+
     #fin = False
     reloj=pygame.time.Clock()
     while not nivel.fin:
@@ -1448,6 +1482,32 @@ def nivel1(j):
                 '''if event.key == pygame.K_DOWN:
                     j.velx=0
                     j.vely=5'''
+                if event.key == pygame.K_q:
+                    pq = True
+                if event.key == pygame.K_w:
+                    pw = True
+                if event.key == pygame.K_e:
+                    pe = True
+                if event.key == pygame.K_r:
+                    pr = True
+                if event.key == pygame.K_t:
+                    pt = True
+                if event.key == pygame.K_n:
+                    nc = True
+                if event.key == pygame.K_2:
+                    n2 = True
+                if event.key == pygame.K_3:
+                    n3 = True
+                if event.key == pygame.K_a:
+                    pq = False
+                    pw = False
+                    pe = False
+                    pr = False
+                    pt = False
+                    nc = False
+                    n2 = False
+                    n3 = False
+
                 if event.key == pygame.K_x:
                     #golpe
                     j.accion=2
@@ -1515,8 +1575,31 @@ def nivel1(j):
             nivel.fin = True
             nivel2(j)'''
 
+        if (pq == True) and (pw == True) and (pe == True) and (pr == True):
+            j.vidas += 10
+            pq = False
+            pw = False
+            pe = False
+            pr = False
+
+        if (pw == True) and (pe == True) and (pr == True) and (pt == True):
+            j.obtener_mejora = True
+            j.proyectil_tipo = 1
+            j.movimiento = 8
+            j.csalto = 12
+            pw = False
+            pe = False
+            pr = False
+            pt = False
 
 
+        if (nc == True) and (n2 == True):
+            nivel.fin = True
+            nivel2(j)
+
+        if (nc == True) and (n3 == True):
+            nivel.fin = True
+            nivel3(j)
 
         # Si el jugador se aproxima a la derecha
         if j.rect.x > nivel.limderecha:
@@ -1791,6 +1874,15 @@ def nivel2(j):
     item_pocion_damage.jugador = j
     nivel.modificadores.add(item_pocion_damage)
 
+    pq = False
+    pw = False
+    pe = False
+    pr = False
+    pt = False
+    nc = False
+    n1 = False
+    n3 = False
+
     #fin = False
     reloj=pygame.time.Clock()
     while not nivel.fin:
@@ -1813,6 +1905,33 @@ def nivel2(j):
                 '''if event.key == pygame.K_DOWN:
                     j.velx=0
                     j.vely=5'''
+
+                if event.key == pygame.K_q:
+                    pq = True
+                if event.key == pygame.K_w:
+                    pw = True
+                if event.key == pygame.K_e:
+                    pe = True
+                if event.key == pygame.K_r:
+                    pr = True
+                if event.key == pygame.K_t:
+                    pt = True
+                if event.key == pygame.K_n:
+                    nc = True
+                if event.key == pygame.K_1:
+                    n1 = True
+                if event.key == pygame.K_3:
+                    n3 = True
+                if event.key == pygame.K_a:
+                    pq = False
+                    pw = False
+                    pe = False
+                    pr = False
+                    pt = False
+                    nc = False
+                    n1 = False
+                    n3 = False
+
                 if event.key == pygame.K_x:
                     #golpe
                     j.accion=2
@@ -1874,6 +1993,31 @@ def nivel2(j):
             GameOver()
             pygame.time.delay(1500)
             nivel.fin = True
+
+        if (pq == True) and (pw == True) and (pe == True) and (pr == True):
+            j.vidas += 10
+            pq = False
+            pw = False
+            pe = False
+            pr = False
+
+        if (pw == True) and (pe == True) and (pr == True) and (pt == True):
+            j.obtener_mejora = True
+            j.proyectil_tipo = 1
+            j.movimiento = 8
+            j.csalto = 12
+            pw = False
+            pe = False
+            pr = False
+            pt = False
+
+        if (nc == True) and (n1 == True):
+            nivel.fin = True
+            nivel1(j)
+
+        if (nc == True) and (n3 == True):
+            nivel.fin = True
+            nivel3(j)
 
         '''#Fin de juego
         if j.cont_enemigos == 11:
@@ -2086,6 +2230,15 @@ def nivel3(j):
     princesa.jugador = j
     nivel.modificadores.add(princesa)
 
+    pq = False
+    pw = False
+    pe = False
+    pr = False
+    pt = False
+    nc = False
+    n1 = False
+    n2 = False
+
     reloj=pygame.time.Clock()
     while not nivel.fin:
         for event in pygame.event.get():
@@ -2107,6 +2260,33 @@ def nivel3(j):
                 '''if event.key == pygame.K_DOWN:
                     j.velx=0
                     j.vely=5'''
+
+                if event.key == pygame.K_q:
+                    pq = True
+                if event.key == pygame.K_w:
+                    pw = True
+                if event.key == pygame.K_e:
+                    pe = True
+                if event.key == pygame.K_r:
+                    pr = True
+                if event.key == pygame.K_t:
+                    pt = True
+                if event.key == pygame.K_n:
+                    nc = True
+                if event.key == pygame.K_1:
+                    n1 = True
+                if event.key == pygame.K_2:
+                    n2 = True
+                if event.key == pygame.K_a:
+                    pq = False
+                    pw = False
+                    pe = False
+                    pr = False
+                    pt = False
+                    nc = False
+                    n1 = False
+                    n2 = False
+
                 if event.key == pygame.K_x:
                     #golpe
                     j.accion=2
@@ -2168,6 +2348,31 @@ def nivel3(j):
             GameOver()
             pygame.time.delay(1500)
             nivel.fin = True
+
+        if (pq == True) and (pw == True) and (pe == True) and (pr == True):
+            j.vidas += 10
+            pq = False
+            pw = False
+            pe = False
+            pr = False
+
+        if (pw == True) and (pe == True) and (pr == True) and (pt == True):
+            j.obtener_mejora = True
+            j.proyectil_tipo = 1
+            j.movimiento = 8
+            j.csalto = 12
+            pw = False
+            pe = False
+            pr = False
+            pt = False
+
+        if (nc == True) and (n1 == True):
+            nivel.fin = True
+            nivel1(j)
+
+        if (nc == True) and (n2 == True):
+            nivel.fin = True
+            nivel2(j)
 
         '''fin de juego
         if j.cont_enemigos == 11:
@@ -2383,7 +2588,7 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RETURN:
                     print (opcion)
                     if opcion == 0:
-                        nivel2(j)
+                        nivel3(j)
                     elif opcion == 1:
                         fin = True
 
