@@ -929,7 +929,6 @@ class Modificadores(pygame.sprite.Sprite):
             self.jugador.obtener_mejora = True
             self.jugador.proyectil_tipo = 1
 
-
     def mejora_vida(self):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
@@ -988,6 +987,9 @@ class Modificadores(pygame.sprite.Sprite):
         hit = pygame.sprite.collide_rect(self, self.jugador)
         if hit:
             self.nivel.fin = True
+            Congratulations()
+            pygame.time.delay(1500)
+
 
     def update(self):
         if self.tipo == 1:
@@ -2588,7 +2590,7 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RETURN:
                     print (opcion)
                     if opcion == 0:
-                        nivel3(j)
+                        nivel1(j)
                     elif opcion == 1:
                         fin = True
 
