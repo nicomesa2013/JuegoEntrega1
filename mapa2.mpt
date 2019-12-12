@@ -58,11 +58,6 @@ tipo:terreno4
 fil:2
 col:12
 
-[m]
-tipo:terreno5_movimiento
-fil:0
-col:0
-
 [l]
 tipo:lava
 fil:5

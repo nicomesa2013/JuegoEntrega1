@@ -297,6 +297,14 @@ class Jugador(pygame.sprite.Sprite):
         self.cont = 0
         self.velx = n*-1'''
 
+class Princesa(pygame.sprite.Sprite):
+    def __init__(self,imagen,pos,jugador):
+        pygame.sprite.Sprite.__init__(self)
+        self.jugador = jugador
+        self.image = imagen
+        self.rect=self.image.get_rect()
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
 
 class Proyectil(pygame.sprite.Sprite):
     def __init__(self,pos,velx,imagen_proyectil):
@@ -347,6 +355,7 @@ class Enemigo1(pygame.sprite.Sprite):
         self.con=0
         self.lim = [7,3,7,3]
         self.image = self.m[self.con][self.accion]
+        self.tipo = 0
 
         self.proyectil_enemigo = pygame.sprite.Group()
 
@@ -412,11 +421,21 @@ class Enemigo1(pygame.sprite.Sprite):
                 self.con = 0
             self.actualizacion= pygame.time.get_ticks()
 
+class Enemigo1v2(Enemigo1):
+    def __init__(self,m,posX, posY):
+        super().__init__(m,posX,posY)
+        self.proyectil_e1 = pygame.image.load('Projectil_e1v2.png')
+        self.proyectil_e2 = pygame.image.load('Projectil_e2v2.png')
+
+
 class Subjefe1(Enemigo1):
     def __init__(self,m,posX, posY):
         super().__init__(m,posX,posY)
         self.puntos_de_vida = pygame.image.load('vidasubjefe1.png')
         self.vidas = 6
+        self.proyectil_e1 = pygame.image.load('Projectil_e1v3.png')
+        self.proyectil_e2 = pygame.image.load('Projectil_e2v3.png')
+        self.tipo = 1
 
     def ataque(self):
         #proyectil enemigo1
@@ -451,6 +470,9 @@ class Subjefe2(Enemigo1):
         super().__init__(m,posX,posY)
         self.puntos_de_vida = pygame.image.load('vidasubjefe2.png')
         self.vidas = 6
+        self.proyectil_e1 = pygame.image.load('Projectil_e1v4.png')
+        self.proyectil_e2 = pygame.image.load('Projectil_e2v4.png')
+        self.tipo = 1
 
     def ataque(self):
         #proyectil enemigo1
@@ -486,6 +508,9 @@ class Jefefinal(Enemigo1):
         super().__init__(m,posX,posY)
         self.puntos_de_vida = pygame.image.load('vidajefefinal.png')
         self.vidas = 12
+        self.proyectil_e1 = pygame.image.load('Projectil_e1v5.png')
+        self.proyectil_e2 = pygame.image.load('Projectil_e2v5.png')
+        self.tipo = 1
 
     def ataque(self):
         #proyectil enemigo1
@@ -517,7 +542,7 @@ class Jefefinal(Enemigo1):
                 espacio_vidas += 15
             else:
                 pantalla.blit(self.puntos_de_vida,[10+self.rect.x+espacio_vidas2,self.rect.y-30])
-                espacio_vidas2 += 15            
+                espacio_vidas2 += 15
             v += 1
 
 class Enemigo2(pygame.sprite.Sprite):
@@ -668,7 +693,7 @@ class Spawner(pygame.sprite.Sprite):
         self.con=0
         self.lim = [7,7,5]
         self.image = self.m[self.con][self.accion]
-        self.vidas = 3
+        self.vidas = -1
         self.rect=self.image.get_rect()
         self.rect.x = posX
         self.rect.y = posY
@@ -724,7 +749,7 @@ class Spawner(pygame.sprite.Sprite):
             self.mov()
 
 class Modificadores(pygame.sprite.Sprite):
-    def __init__(self,pos,imagen,tipo,jugador = None):
+    def __init__(self,pos,imagen,tipo,jugador,nivel):
         pygame.sprite.Sprite.__init__(self)
         self.jugador = jugador
         self.image = imagen
@@ -732,6 +757,7 @@ class Modificadores(pygame.sprite.Sprite):
         self.rect.x=pos[0]
         self.rect.y=pos[1]
         self.tipo = tipo
+        self.nivel = nivel
     def kill(self):
         pygame.sprite.Sprite.kill(self)
     def mejora_proyectil(self):
@@ -796,6 +822,11 @@ class Modificadores(pygame.sprite.Sprite):
             self.jugador.mejora_pocion = self.image
             self.jugador.obtener_pocion = True
 
+    def princesa(self):
+        hit = pygame.sprite.collide_rect(self, self.jugador)
+        if hit:
+            self.nivel.fin = True
+
     def update(self):
         if self.tipo == 1:
             self.mejora_proyectil()
@@ -811,6 +842,8 @@ class Modificadores(pygame.sprite.Sprite):
             self.pocion_snormal()
         if self.tipo == 7:
             self.pocion_speed2()
+        if self.tipo == 8:
+            self.princesa()
 
 
 class Bloque_Movimiento(Bloque):
@@ -1205,40 +1238,40 @@ def nivel1(j):
     proyectil1_j2 = pygame.image.load('proyectil2_j2.png')
 
 
-    item_mejora = Modificadores([325,275],proyectil_j2,1,j)
+    item_mejora = Modificadores([325,275],proyectil_j2,1,j,nivel)
     item_mejora.jugador = j
     nivel.modificadores.add(item_mejora)
 
     vida_imagen = pygame.image.load('vida.png')
-    item_vida = Modificadores([1325,790],vida_imagen,2,j)
+    item_vida = Modificadores([1325,790],vida_imagen,2,j,nivel)
     item_vida.jugador = j
-    item_vida2 = Modificadores([2700,500],vida_imagen,2,j)
+    item_vida2 = Modificadores([2700,500],vida_imagen,2,j,nivel)
     item_vida2.jugador = j
     nivel.modificadores.add(item_vida)
     nivel.modificadores.add(item_vida2)
 
     imagen_pocion_damage = pygame.image.load('pocion_damage.png')
-    item_pocion_damage = Modificadores([1000,900],imagen_pocion_damage,3,j)
+    item_pocion_damage = Modificadores([1000,900],imagen_pocion_damage,3,j,nivel)
     item_pocion_damage.jugador = j
     nivel.modificadores.add(item_pocion_damage)
 
     imagen_pocion_slow = pygame.image.load('pocion_slow.png')
-    item_pocion_slow = Modificadores([1600,900],imagen_pocion_slow,4,j)
+    item_pocion_slow = Modificadores([1600,900],imagen_pocion_slow,4,j,nivel)
     item_pocion_slow.jugador = j
     nivel.modificadores.add(item_pocion_slow)
 
     imagen_pocion_speed = pygame.image.load('pocion_speed.png')
-    item_pocion_speed = Modificadores([130,705],imagen_pocion_speed,5,j)
+    item_pocion_speed = Modificadores([130,705],imagen_pocion_speed,5,j,nivel)
     item_pocion_speed.jugador = j
-    item_pocion_speed2 = Modificadores([2000,900],imagen_pocion_speed,5,j)
+    item_pocion_speed2 = Modificadores([2000,900],imagen_pocion_speed,5,j,nivel)
     item_pocion_speed2.jugador = j
     nivel.modificadores.add(item_pocion_speed)
     nivel.modificadores.add(item_pocion_speed2)
 
     imagen_pocion_snormal = pygame.image.load('pocion_snormal.png')
-    item_pocion_snormal = Modificadores([560,755],imagen_pocion_snormal,6,j)
+    item_pocion_snormal = Modificadores([560,755],imagen_pocion_snormal,6,j,nivel)
     item_pocion_snormal.jugador = j
-    item_pocion_snormal2 = Modificadores([1550,735],imagen_pocion_snormal,6,j)
+    item_pocion_snormal2 = Modificadores([1550,735],imagen_pocion_snormal,6,j,nivel)
     item_pocion_snormal2.jugador = j
     nivel.modificadores.add(item_pocion_snormal)
     nivel.modificadores.add(item_pocion_snormal2)
@@ -1334,15 +1367,15 @@ def nivel1(j):
                 nivel.fvely = 0
 
         '''Vemos si le quedan vidas'''
-        if j.vidas == 0:
+        if j.vidas <= 0:
             GameOver()
             pygame.time.delay(1500)
             nivel.fin = True
 
-        '''Fin de juego'''
+        '''#Fin de juego
         if j.cont_enemigos >= 11 and len(nivel.enemigos1) == 0:
             nivel.fin = True
-            nivel2(j)
+            nivel2(j)'''
 
 
 
@@ -1441,8 +1474,12 @@ def nivel1(j):
         for enemigo in nivel.enemigos1:
             ls_pro=pygame.sprite.spritecollide(j,enemigo.proyectil_enemigo,True)
             for be in ls_pro:
-                j.sonido_jugador.play()
-                j.vidas -= 1
+                if enemigo.tipo == 0:
+                    j.sonido_jugador.play()
+                    j.vidas -= 1
+                if enemigo.tipo == 1:
+                    j.sonido_jugador.play()
+                    j.vidas -= 2
 
         #proyectil en enemigo1
         for e_fantasma in nivel.enemigos1:
@@ -1453,8 +1490,8 @@ def nivel1(j):
                     e_fantasma.vidas -= 1
                     e_fantasma.sonido_enemigo1.play()
                 else:
-                    e_fantasma.vidas = 0
-                if e_fantasma.vidas == 0:
+                    e_fantasma.vidas -= 2
+                if e_fantasma.vidas <= 0:
                     e_fantasma.estado = False
                     nivel.enemigos1.remove(e_fantasma)
                     j.cont_enemigos += 1
@@ -1468,8 +1505,8 @@ def nivel1(j):
                     e_arana.vidas -= 1
                     e_arana.sonido_damage.play()
                 else:
-                    e_arana.vidas = 0
-                if e_arana.vidas == 0:
+                    e_arana.vidas -= 2
+                if e_arana.vidas <= 0:
                     nivel.enemigos2.remove(e_arana)
                     e_arana.sonido_damage2.play()
                     j.cont_enemigos += 1
@@ -1541,22 +1578,22 @@ def nivel2(j):
     recorte_enemigosubjefe1=Recortar(imagenenemigosubjefe1,128,128,0)
 
     imagen_pocion_speed = pygame.image.load('pocion_speed.png')
-    item_pocion_speed = Modificadores([100,704],imagen_pocion_speed,7,j)
+    item_pocion_speed = Modificadores([100,704],imagen_pocion_speed,7,j,nivel)
     item_pocion_speed.jugador = j
     nivel.modificadores.add(item_pocion_speed)
 
     # Flor
     imagenenemigo4 = pygame.image.load('enemigo4.png')
     recorte_enemigo4=Recortar(imagenenemigo4,64,64,0)
-    enemigo4A = Enemigo1(recorte_enemigo4,130,672)
+    enemigo4A = Enemigo1v2(recorte_enemigo4,130,672)
     enemigo4A.jugador = j
-    enemigo4B = Enemigo1(recorte_enemigo4,300,545)
+    enemigo4B = Enemigo1v2(recorte_enemigo4,300,545)
     enemigo4B.jugador = j
-    enemigo4C = Enemigo1(recorte_enemigo4,910,418)
+    enemigo4C = Enemigo1v2(recorte_enemigo4,910,418)
     enemigo4C.jugador = j
-    enemigo4D = Enemigo1(recorte_enemigo4,1420,481)
+    enemigo4D = Enemigo1v2(recorte_enemigo4,1420,481)
     enemigo4D.jugador = j
-    enemigo4E = Enemigo1(recorte_enemigo4,1120,416)
+    '''enemigo4E = Enemigo1(recorte_enemigo4,1120,416)
     enemigo4E.jugador = j
     enemigo4F = Enemigo1(recorte_enemigo4,1780,416)
     enemigo4F.jugador = j
@@ -1567,10 +1604,11 @@ def nivel2(j):
     enemigo4I = Enemigo1(recorte_enemigo4,1312,480)
     enemigo4I.jugador = j
     enemigo4J = Enemigo1(recorte_enemigo4,1588,480)
-    enemigo4J.jugador = j
+    enemigo4J.jugador = j'''
 
-    #nivel.enemigos1.add(enemigo4A)
-    #nivel.enemigos1.add(enemigo4B)
+
+    nivel.enemigos1.add(enemigo4A)
+    nivel.enemigos1.add(enemigo4B)
     nivel.enemigos1.add(enemigo4C)
     nivel.enemigos1.add(enemigo4D)
     #nivel.enemigos1.add(enemigo4E)
@@ -1589,9 +1627,9 @@ def nivel2(j):
     enemigo3C = Enemigo2(recorte_enemigo3,532,384)
     enemigo3C.jugador = j
 
-    #nivel.enemigos2.add(enemigo3A)
-    #nivel.enemigos2.add(enemigo3B)
-    #nivel.enemigos2.add(enemigo3C)
+    nivel.enemigos2.add(enemigo3A)
+    nivel.enemigos2.add(enemigo3B)
+    nivel.enemigos2.add(enemigo3C)
 
 
     imagenenemigosubjefe2 = pygame.image.load('subjefe2.png')
@@ -1606,7 +1644,7 @@ def nivel2(j):
     nivel.portales.add(portal_2)
 
     vida_imagen = pygame.image.load('vida.png')
-    item_vida = Modificadores([1600,410],vida_imagen,2,j)
+    item_vida = Modificadores([1600,410],vida_imagen,2,j,nivel)
     item_vida.jugador = j
     nivel.modificadores.add(item_vida)
 
@@ -1689,16 +1727,16 @@ def nivel2(j):
                 nivel.fvely = 0
 
         '''Vemos si le quedan vidas'''
-        if j.vidas == 0:
+        if j.vidas <= 0:
             GameOver()
             pygame.time.delay(1500)
             nivel.fin = True
 
-        '''Fin de juego'''
+        '''#Fin de juego
         if j.cont_enemigos == 11:
             Congratulations()
             pygame.time.delay(1500)
-            nivel.fin = True
+            nivel.fin = True'''
 
 
         # Si el jugador se aproxima a la derecha
@@ -1796,8 +1834,12 @@ def nivel2(j):
         for enemigo in nivel.enemigos1:
             ls_pro=pygame.sprite.spritecollide(j,enemigo.proyectil_enemigo,True)
             for be in ls_pro:
-                j.sonido_jugador.play()
-                j.vidas -= 1
+                if enemigo.tipo == 0:
+                    j.sonido_jugador.play()
+                    j.vidas -= 1
+                if enemigo.tipo == 1:
+                    j.sonido_jugador.play()
+                    j.vidas -= 2
 
         #proyectil en enemigo1
         for e_fantasma in nivel.enemigos1:
@@ -1808,8 +1850,8 @@ def nivel2(j):
                     e_fantasma.vidas -= 1
                     e_fantasma.sonido_enemigo1.play()
                 else:
-                    e_fantasma.vidas = 0
-                if e_fantasma.vidas == 0:
+                    e_fantasma.vidas -= 2
+                if e_fantasma.vidas <= 0:
                     e_fantasma.estado = False
                     nivel.enemigos1.remove(e_fantasma)
                     j.cont_enemigos += 1
@@ -1824,8 +1866,8 @@ def nivel2(j):
                     e_arana.vidas -= 1
                     e_arana.sonido_damage.play()
                 else:
-                    e_arana.vidas = 0
-                if e_arana.vidas == 0:
+                    e_arana.vidas -= 2
+                if e_arana.vidas <= 0:
                     nivel.enemigos2.remove(e_arana)
                     e_arana.sonido_damage2.play()
                     j.cont_enemigos += 1
@@ -1891,18 +1933,21 @@ def nivel3(j):
 
     imagenenemigojefefinal = pygame.image.load('jefefinal.png')
     recorte_enemigojefefinal=Recortar(imagenenemigojefefinal,128,128,0)
-    jefefinal = Jefefinal(recorte_enemigojefefinal,600,750)
+    jefefinal = Jefefinal(recorte_enemigojefefinal,900,735)
     jefefinal.jugador = j
     nivel.enemigos1.add(jefefinal)
 
 
+    imagenprincesa = pygame.image.load('princessv2.png')
+    princesa = Modificadores([1275,818],imagenprincesa,8,j,nivel)
+    princesa.jugador = j
+    nivel.modificadores.add(princesa)
 
-    fin = False
     reloj=pygame.time.Clock()
-    while not fin:
+    while not nivel.fin:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                fin=True
+                nivel.fin=True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     j.velx=j.movimiento
@@ -1976,16 +2021,16 @@ def nivel3(j):
                 nivel.fvely = 0
 
         '''Vemos si le quedan vidas'''
-        if j.vidas == 0:
+        if j.vidas <= 0:
             GameOver()
             pygame.time.delay(1500)
-            fin = True
+            nivel.fin = True
 
-        '''Fin de juego'''
+        '''fin de juego
         if j.cont_enemigos == 11:
             Congratulations()
             pygame.time.delay(1500)
-            fin = True
+            nivel.fin = True'''
 
 
 
@@ -2084,8 +2129,12 @@ def nivel3(j):
         for enemigo in nivel.enemigos1:
             ls_pro=pygame.sprite.spritecollide(j,enemigo.proyectil_enemigo,True)
             for be in ls_pro:
-                j.sonido_jugador.play()
-                j.vidas -= 1
+                if enemigo.tipo == 0:
+                    j.sonido_jugador.play()
+                    j.vidas -= 1
+                if enemigo.tipo == 1:
+                    j.sonido_jugador.play()
+                    j.vidas -= 2
 
         #proyectil en enemigo1
         for e_fantasma in nivel.enemigos1:
@@ -2096,8 +2145,8 @@ def nivel3(j):
                     e_fantasma.vidas -= 1
                     e_fantasma.sonido_enemigo1.play()
                 else:
-                    e_fantasma.vidas = 0
-                if e_fantasma.vidas == 0:
+                    e_fantasma.vidas -= 2
+                if e_fantasma.vidas <= 0:
                     e_fantasma.estado = False
                     nivel.enemigos1.remove(e_fantasma)
                     j.cont_enemigos += 1
@@ -2167,7 +2216,6 @@ if __name__ == '__main__':
     musica_juego.play()
 
     imagenProtagonista = pygame.image.load('personajev2.png')
-    #info = imagenProtagonista.get_rect()
     mJ = Recortar(imagenProtagonista,32,56,3) #Matriz sprite Jugador
     j=Jugador(mJ)
 
@@ -2192,7 +2240,7 @@ if __name__ == '__main__':
                 if event.key == pygame.K_RETURN:
                     print (opcion)
                     if opcion == 0:
-                        nivel3(j)
+                        nivel1(j)
                     elif opcion == 1:
                         fin = True
 
